@@ -28,7 +28,9 @@ const Index = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="text-center max-w-2xl">
-        <h1 className="text-7xl font-bold mb-6 tracking-tighter">CAMPUS</h1>
+        <h1 className="text-7xl font-bold mb-6 tracking-tighter">
+          <span className="bg-white text-black px-2">BRO</span>CAMPUS
+        </h1>
         <p className="text-gray-400 text-lg mb-12 tracking-wide leading-relaxed">
           Ultra-minimal campus ecosystem. Connect with activities, events, and community.
           <br />
