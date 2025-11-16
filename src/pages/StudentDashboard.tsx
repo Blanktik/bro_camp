@@ -1,7 +1,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, FileText } from 'lucide-react';
+import { Calendar, Users, MessageSquare, FileText } from 'lucide-react';
 
 export default function StudentDashboard() {
   const { user, signOut } = useAuth();
@@ -9,6 +9,8 @@ export default function StudentDashboard() {
 
   const menuItems = [
     { icon: Calendar, label: 'Events', path: '/student/events' },
+    { icon: Users, label: 'Groups', path: '/student/groups' },
+    { icon: MessageSquare, label: 'Anonymous Q&A', path: '/student/questions' },
     { icon: FileText, label: 'Submit Complaint', path: '/student/complaints' },
   ];
 
@@ -16,9 +18,7 @@ export default function StudentDashboard() {
     <div className="min-h-screen">
       <header className="border-b border-gray-850 p-4 flex justify-between items-center">
         <div className="flex items-center gap-8">
-          <h1 className="text-2xl font-bold tracking-tighter">
-            <span className="bg-white text-black px-2">BRO</span>CAMPUS
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tighter">CAMPUS</h1>
           <span className="text-xs text-gray-500 tracking-wider">STUDENT PORTAL</span>
         </div>
         <Button

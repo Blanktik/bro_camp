@@ -19,9 +19,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen">
       <header className="border-b border-gray-850 p-4 flex justify-between items-center">
         <div className="flex items-center gap-8">
-          <h1 className="text-2xl font-bold tracking-tighter">
-            <span className="bg-white text-black px-2">BRO</span>CAMPUS
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tighter">CAMPUS</h1>
           <span className="text-xs text-gray-500 tracking-wider">ADMIN CONTROL</span>
         </div>
         <div className="flex items-center gap-4">
