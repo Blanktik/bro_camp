@@ -1,14 +1,13 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, FileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
 
 export default function StudentDashboard() {
-  const { user, signOut } = useAuth();
+  const { user, userRole, signOut } = useAuth();
   const navigate = useNavigate();
 
   const menuItems = [
-    { icon: Calendar, label: 'Events', path: '/student/events' },
     { icon: FileText, label: 'Submit Complaint', path: '/student/complaints' },
   ];
 
@@ -19,7 +18,9 @@ export default function StudentDashboard() {
           <h1 className="text-2xl font-bold tracking-tighter">
             <span className="bg-white text-black px-2">BRO</span>CAMPUS
           </h1>
-          <span className="text-xs text-gray-500 tracking-wider">STUDENT PORTAL</span>
+          <span className="text-xs text-gray-500 tracking-wider">
+            {userRole === 'super_admin' ? 'SUPER ADMIN' : userRole === 'admin' ? 'ADMIN' : 'STUDENT PORTAL'}
+          </span>
         </div>
         <Button
           onClick={signOut}
