@@ -35,14 +35,24 @@ export default function Auth() {
         toast.success('Account created! Redirecting...');
         navigate('/student');
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) throw error;
+
+        // Fetch user role to determine redirect
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id);
+
+        const userRoles = roles || [];
+        const isAdmin = userRoles.some(r => r.role === 'super_admin' || r.role === 'admin');
+
         toast.success('Signed in successfully!');
-        navigate('/student');
+        navigate(isAdmin ? '/admin' : '/student');
       }
     } catch (error: any) {
       toast.error(error.message);
