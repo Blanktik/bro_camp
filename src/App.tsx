@@ -13,6 +13,8 @@ import StudentComplaints from "./pages/StudentComplaints";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminComplaints from "./pages/AdminComplaints";
 import AdminUsers from "./pages/AdminUsers";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminModeration from "./pages/AdminModeration";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -76,6 +78,22 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="super_admin">
                   <AdminUsers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/analytics"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminAnalytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/moderation"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminModeration />
                 </ProtectedRoute>
               }
             />

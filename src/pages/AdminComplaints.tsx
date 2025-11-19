@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { ArrowLeft, UserX } from 'lucide-react';
+import { ArrowLeft, UserX, ThumbsUp, Eye, CheckCircle2 } from 'lucide-react';
 
 interface Complaint {
   id: string;
@@ -17,6 +17,12 @@ interface Complaint {
   created_at: string;
   profiles: { full_name: string } | null;
 }
+
+const quickMacros = [
+  { label: 'OK', icon: ThumbsUp, response: 'Acknowledged. We will look into this matter.' },
+  { label: 'HMMM', icon: Eye, response: 'Investigating this issue. Will update you soon.' },
+  { label: 'DONE', icon: CheckCircle2, response: 'Issue has been resolved. Thank you for bringing this to our attention.' },
+];
 
 export default function AdminComplaints() {
   const navigate = useNavigate();
@@ -61,6 +67,25 @@ export default function AdminComplaints() {
       toast.error(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleQuickMacro = async (complaintId: string, macroResponse: string) => {
+    try {
+      const { error } = await supabase
+        .from('complaints')
+        .update({
+          admin_response: macroResponse,
+          status: 'resolved',
+        })
+        .eq('id', complaintId);
+
+      if (error) throw error;
+
+      toast.success('Quick response sent');
+      fetchComplaints();
+    } catch (error: any) {
+      toast.error(error.message);
     }
   };
 
@@ -114,97 +139,122 @@ export default function AdminComplaints() {
           </div>
 
           <div className="space-y-4">
-            {complaints.map((complaint) => (
-              <div
-                key={complaint.id}
-                className="border border-gray-850 p-6 hover:border-gray-700 transition-colors"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-bold text-lg">{complaint.title}</h3>
-                      {complaint.is_anonymous && (
+            {complaints.length === 0 ? (
+              <div className="border border-gray-850 p-12 text-center">
+                <p className="text-gray-500">No complaints submitted yet</p>
+              </div>
+            ) : (
+              complaints.map((complaint) => (
+                <div
+                  key={complaint.id}
+                  className="border border-gray-850 p-6 hover:border-gray-700 transition-colors"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-bold text-lg">{complaint.title}</h3>
                         <Badge
-                          variant="outline"
-                          className="border-gray-700 text-gray-400 text-xs"
+                          className={`text-xs tracking-wider ${
+                            complaint.status === 'pending'
+                              ? 'bg-gray-800 text-gray-300'
+                              : 'bg-white text-black'
+                          }`}
                         >
-                          <UserX className="w-3 h-3 mr-1" />
-                          ANONYMOUS
+                          {complaint.status.toUpperCase()}
                         </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-gray-400">
+                        {complaint.is_anonymous ? (
+                          <span className="flex items-center gap-1">
+                            <UserX className="w-4 h-4" />
+                            Anonymous
+                          </span>
+                        ) : (
+                          <span>{complaint.profiles?.full_name || 'Unknown User'}</span>
+                        )}
+                        <span>•</span>
+                        <span>
+                          {new Date(complaint.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-gray-300 mb-4 text-sm leading-relaxed">
+                    {complaint.description}
+                  </p>
+
+                  {complaint.status === 'pending' && (
+                    <div className="space-y-4">
+                      <div className="flex gap-2 pb-4 border-b border-gray-850">
+                        <span className="text-xs text-gray-500 tracking-wider">QUICK MACRO:</span>
+                        {quickMacros.map((macro) => (
+                          <Button
+                            key={macro.label}
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleQuickMacro(complaint.id, macro.response)}
+                            className="border-gray-850 text-gray-400 hover:text-white hover:border-white h-7 px-3 text-xs"
+                          >
+                            <macro.icon className="w-3 h-3 mr-1" />
+                            {macro.label}
+                          </Button>
+                        ))}
+                      </div>
+
+                      {selectedComplaint?.id === complaint.id ? (
+                        <div className="space-y-3 pt-2">
+                          <Textarea
+                            value={response}
+                            onChange={(e) => setResponse(e.target.value)}
+                            placeholder="Write a detailed response..."
+                            className="bg-transparent border-gray-850 focus:border-white resize-none"
+                            rows={4}
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => handleRespond(complaint.id)}
+                              className="bg-white text-black hover:bg-gray-200 text-xs h-8"
+                              disabled={!response.trim()}
+                            >
+                              SUBMIT RESPONSE
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setSelectedComplaint(null);
+                                setResponse('');
+                              }}
+                              variant="outline"
+                              className="border-gray-850 text-gray-400 hover:text-white hover:border-white text-xs h-8"
+                            >
+                              CANCEL
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => setSelectedComplaint(complaint)}
+                          variant="outline"
+                          className="border-gray-850 text-gray-400 hover:text-white hover:border-white text-xs h-8"
+                        >
+                          CUSTOM RESPONSE
+                        </Button>
                       )}
-                      <Badge
-                        variant={complaint.status === 'resolved' ? 'default' : 'outline'}
-                        className="text-xs"
-                      >
-                        {complaint.status.toUpperCase()}
-                      </Badge>
                     </div>
-                    <p className="text-sm text-gray-400 mb-1">
-                      {complaint.is_anonymous
-                        ? 'Anonymous User'
-                        : complaint.profiles?.full_name || 'Unknown User'}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(complaint.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
+                  )}
+
+                  {complaint.admin_response && (
+                    <div className="border-t border-gray-850 pt-4 mt-4">
+                      <p className="text-xs text-gray-500 mb-2 tracking-wider">ADMIN RESPONSE</p>
+                      <p className="text-sm text-gray-300">{complaint.admin_response}</p>
+                    </div>
+                  )}
                 </div>
-
-                <p className="text-gray-300 mb-4">{complaint.description}</p>
-
-                {complaint.admin_response && (
-                  <div className="border-t border-gray-850 pt-4 mt-4">
-                    <p className="text-xs text-gray-500 mb-2">ADMIN RESPONSE:</p>
-                    <p className="text-sm text-gray-300">{complaint.admin_response}</p>
-                  </div>
-                )}
-
-                {selectedComplaint?.id === complaint.id ? (
-                  <div className="border-t border-gray-850 pt-4 mt-4 space-y-4">
-                    <Textarea
-                      value={response}
-                      onChange={(e) => setResponse(e.target.value)}
-                      placeholder="Write your response..."
-                      className="bg-transparent border-gray-850 focus:border-white resize-none"
-                      rows={4}
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleRespond(complaint.id)}
-                        className="bg-white text-black hover:bg-gray-200"
-                      >
-                        SUBMIT RESPONSE
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setSelectedComplaint(null);
-                          setResponse('');
-                        }}
-                        variant="outline"
-                        className="border-gray-850"
-                      >
-                        CANCEL
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  complaint.status === 'pending' && (
-                    <Button
-                      onClick={() => setSelectedComplaint(complaint)}
-                      variant="outline"
-                      className="mt-4 border-gray-850 text-gray-400 hover:text-white hover:border-white"
-                    >
-                      RESPOND
-                    </Button>
-                  )
-                )}
-              </div>
-            ))}
-
-            {complaints.length === 0 && (
-              <div className="text-center py-12 text-gray-500">
-                No complaints submitted yet
-              </div>
+              ))
             )}
           </div>
         </div>
