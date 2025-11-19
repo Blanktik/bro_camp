@@ -57,24 +57,19 @@ export default function AdminUsers() {
 
       if (rolesError) throw rolesError;
 
-      // Get user emails directly from profiles query
-      const combinedUsers = await Promise.all(
-        profilesData.map(async (profile) => {
-          const userRoles = rolesData?.filter((r) => r.user_id === profile.id) || [];
-          
-          // Get email from auth.users via RPC or just use profile id
-          const { data: authData } = await supabase.auth.admin.getUserById(profile.id);
-          
-          return {
-            id: profile.id,
-            full_name: profile.full_name,
-            email: authData.user?.email || 'N/A',
-            department: profile.department,
-            year: profile.year,
-            roles: userRoles,
-          };
-        })
-      );
+      // Combine users with their roles - use user ID as email placeholder since we can't fetch from auth.users in browser
+      const combinedUsers = profilesData.map((profile) => {
+        const userRoles = rolesData?.filter((r) => r.user_id === profile.id) || [];
+        
+        return {
+          id: profile.id,
+          full_name: profile.full_name,
+          email: `User ID: ${profile.id.substring(0, 8)}...`,
+          department: profile.department,
+          year: profile.year,
+          roles: userRoles,
+        };
+      });
 
       setUsers(combinedUsers);
     } catch (error: any) {

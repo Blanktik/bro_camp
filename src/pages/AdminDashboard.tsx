@@ -9,7 +9,6 @@ export default function AdminDashboard() {
 
   const adminItems = [
     { icon: Users, label: 'User Management', path: '/admin/users' },
-    { icon: Calendar, label: 'Events', path: '/admin/events' },
     { icon: FileText, label: 'Complaints', path: '/admin/complaints' },
     { icon: Shield, label: 'Moderation', path: '/admin/moderation' },
     { icon: BarChart, label: 'Analytics', path: '/admin/analytics' },
