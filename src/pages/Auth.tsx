@@ -43,16 +43,27 @@ export default function Auth() {
         if (error) throw error;
 
         // Fetch user role to determine redirect
-        const { data: roles } = await supabase
+        const { data: roles, error: rolesError } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', data.user.id);
 
+        if (rolesError) {
+          console.error('Error fetching roles:', rolesError);
+        }
+
+        console.log('Fetched roles:', roles);
         const userRoles = roles || [];
-        const isAdmin = userRoles.some(r => r.role === 'super_admin' || r.role === 'admin');
+        const hasAdminRole = userRoles.some(r => r.role === 'super_admin' || r.role === 'admin');
+        
+        console.log('Is admin?', hasAdminRole, 'Roles:', userRoles);
 
         toast.success('Signed in successfully!');
-        navigate(isAdmin ? '/admin' : '/student');
+        
+        // Small delay to ensure auth state is fully updated
+        setTimeout(() => {
+          navigate(hasAdminRole ? '/admin' : '/student');
+        }, 100);
       }
     } catch (error: any) {
       toast.error(error.message);
