@@ -42,7 +42,7 @@ export default function Auth() {
 
         if (error) throw error;
         toast.success('Signed in successfully!');
-        // Navigation will be handled by Index page based on user role
+        navigate('/');
       }
     } catch (error: any) {
       toast.error(error.message);
@@ -58,7 +58,7 @@ export default function Auth() {
           <h1 className="text-5xl font-bold mb-3 tracking-tighter">
             <span className="bg-white text-black px-2">BRO</span>CAMPUS
           </h1>
-          <p className="text-gray-400 text-sm tracking-wider">ULTRA MINIMAL ECOSYSTEM</p>
+          <p className="text-gray-400 text-sm tracking-wider">BROTHER YOU NEVER HAD</p>
         </div>
 
         <div className="border border-gray-850 p-8">
