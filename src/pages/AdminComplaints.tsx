@@ -168,7 +168,7 @@ export default function AdminComplaints() {
                           {complaint.is_anonymous && <UserX className="w-4 h-4" />}
                           {complaint.is_anonymous
                             ? 'Anonymous'
-                            : (complaint.profiles?.full_name || 'User')}
+                            : (complaint.profiles?.full_name || 'Unknown User')}
                         </span>
                         <span>•</span>
                         <span>
