@@ -164,14 +164,10 @@ export default function AdminComplaints() {
                         </Badge>
                       </div>
                       <div className="flex items-center gap-3 text-sm text-gray-400">
-                        {complaint.is_anonymous ? (
-                          <span className="flex items-center gap-1">
-                            <UserX className="w-4 h-4" />
-                            Anonymous
-                          </span>
-                        ) : (
-                          <span>{complaint.profiles?.full_name || 'Unknown User'}</span>
-                        )}
+                        <span className="flex items-center gap-1">
+                          {complaint.is_anonymous && <UserX className="w-4 h-4" />}
+                          {complaint.is_anonymous ? 'Anonymous' : (complaint.profiles?.full_name || 'Unknown User')}
+                        </span>
                         <span>•</span>
                         <span>
                           {new Date(complaint.created_at).toLocaleDateString('en-US', {
