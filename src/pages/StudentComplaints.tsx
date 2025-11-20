@@ -61,7 +61,7 @@ export default function StudentComplaints() {
     setLoading(true);
     try {
       const { error } = await supabase.from('complaints').insert({
-        user_id: isAnonymous ? null : user.id,
+        user_id: user.id, // Always store user_id so students can see responses
         title,
         description,
         is_anonymous: isAnonymous,

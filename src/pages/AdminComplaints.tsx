@@ -54,12 +54,12 @@ export default function AdminComplaints() {
         .select('id, full_name')
         .in('id', userIds);
 
-      // Merge data
+      // Merge data and hide identity for anonymous complaints
       const complaints = complaintsData.map(complaint => ({
         ...complaint,
-        profiles: complaint.user_id
-          ? profilesData?.find(p => p.id === complaint.user_id) || null
-          : null
+        profiles: complaint.is_anonymous
+          ? { full_name: 'Anonymous' }
+          : (profilesData?.find(p => p.id === complaint.user_id) || null)
       }));
 
       setComplaints(complaints);
