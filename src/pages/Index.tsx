@@ -31,11 +31,11 @@ const Index = () => {
         <h1 className="text-7xl font-bold mb-6 tracking-tighter">
           <span className="bg-white text-black px-2">BRO</span>CAMPUS
         </h1>
-        <p className="text-gray-400 text-lg mb-12 tracking-wide leading-relaxed">
-          Ultra-minimal campus ecosystem. Connect with activities, events, and community.
-          <br />
-          Pure black & white. Sharp edges. High contrast.
+        <p className="text-gray-400 text-lg mb-6 tracking-wide leading-relaxed">
+          Are you looking for SOMETHING MORE?? Whatever your past may be, if you are willing to work hard to change your future;
+          We have BROCAMP for you.
         </p>
+        <p className="text-gray-500 text-sm mb-10 tracking-wide uppercase">BROTHER YOU NEVER HAD</p>
         
         <div className="flex gap-4 justify-center">
           <Button
