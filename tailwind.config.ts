@@ -86,10 +86,101 @@ export default {
             height: "0",
           },
         },
+        "fade-in": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(10px)"
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)"
+          }
+        },
+        "fade-in-up": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(20px)"
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)"
+          }
+        },
+        "slide-in-right": {
+          "0%": {
+            transform: "translateX(100%)",
+            opacity: "0"
+          },
+          "100%": {
+            transform: "translateX(0)",
+            opacity: "1"
+          }
+        },
+        "slide-in-left": {
+          "0%": {
+            transform: "translateX(-100%)",
+            opacity: "0"
+          },
+          "100%": {
+            transform: "translateX(0)",
+            opacity: "1"
+          }
+        },
+        "scale-in": {
+          "0%": {
+            transform: "scale(0.9)",
+            opacity: "0"
+          },
+          "100%": {
+            transform: "scale(1)",
+            opacity: "1"
+          }
+        },
+        "glitch": {
+          "0%, 100%": {
+            transform: "translate(0)"
+          },
+          "20%": {
+            transform: "translate(-2px, 2px)"
+          },
+          "40%": {
+            transform: "translate(-2px, -2px)"
+          },
+          "60%": {
+            transform: "translate(2px, 2px)"
+          },
+          "80%": {
+            transform: "translate(2px, -2px)"
+          }
+        },
+        "pulse-border": {
+          "0%, 100%": {
+            borderColor: "hsl(var(--gray-850))"
+          },
+          "50%": {
+            borderColor: "hsl(var(--pure-white))"
+          }
+        },
+        "text-shimmer": {
+          "0%, 100%": {
+            backgroundPosition: "0% 50%"
+          },
+          "50%": {
+            backgroundPosition: "100% 50%"
+          }
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 0.6s ease-out",
+        "fade-in-up": "fade-in-up 0.8s ease-out",
+        "slide-in-right": "slide-in-right 0.5s ease-out",
+        "slide-in-left": "slide-in-left 0.5s ease-out",
+        "scale-in": "scale-in 0.4s ease-out",
+        "glitch": "glitch 0.3s ease-in-out",
+        "pulse-border": "pulse-border 2s ease-in-out infinite",
+        "text-shimmer": "text-shimmer 3s ease-in-out infinite"
       },
     },
   },
