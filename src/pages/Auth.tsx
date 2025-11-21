@@ -52,16 +52,16 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 animate-fade-in">
       <div className="w-full max-w-md">
-        <div className="text-center mb-12">
+        <div className="text-center mb-12 animate-scale-in">
           <h1 className="text-5xl font-bold mb-3 tracking-tighter">
-            <span className="bg-white text-black px-2">BRO</span>CAMP
+            <span className="bg-white text-black px-2 inline-block hover:animate-glitch">BRO</span>CAMP
           </h1>
           <p className="text-gray-400 text-sm tracking-wider">BROTHER YOU NEVER HAD</p>
         </div>
 
-        <div className="border border-gray-850 p-8">
+        <div className="border border-gray-850 p-8 hover-border-white transition-colors duration-300 animate-fade-in-up animate-delay-200">
           <div className="flex mb-8 border-b border-gray-850">
             <button
               onClick={() => setIsSignUp(false)}

@@ -83,3 +83,48 @@ All colors MUST be HSL.
     border-radius: 0 !important;
   }
 }
+
+@layer utilities {
+  /* Hover Effects */
+  .hover-scale {
+    @apply transition-transform duration-300 ease-out hover:scale-105;
+  }
+  
+  .hover-glow {
+    @apply transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)];
+  }
+  
+  .hover-border-white {
+    @apply transition-colors duration-300 hover:border-white;
+  }
+  
+  /* Stagger Animation Classes */
+  .animate-delay-100 {
+    animation-delay: 100ms;
+  }
+  
+  .animate-delay-200 {
+    animation-delay: 200ms;
+  }
+  
+  .animate-delay-300 {
+    animation-delay: 300ms;
+  }
+  
+  .animate-delay-400 {
+    animation-delay: 400ms;
+  }
+  
+  .animate-delay-500 {
+    animation-delay: 500ms;
+  }
+  
+  /* Text shimmer effect */
+  .text-shimmer {
+    background: linear-gradient(90deg, hsl(var(--gray-500)), hsl(var(--pure-white)), hsl(var(--gray-500)));
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}

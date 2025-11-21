@@ -19,34 +19,34 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center animate-fade-in">
         <div className="w-8 h-8 border border-white border-t-transparent animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 animate-fade-in">
       <div className="text-center max-w-2xl">
-        <h1 className="text-7xl font-bold mb-6 tracking-tighter">
-          <span className="bg-white text-black px-2">BRO</span>CAMP
+        <h1 className="text-7xl font-bold mb-6 tracking-tighter animate-scale-in">
+          <span className="bg-white text-black px-2 inline-block hover:animate-glitch transition-all">BRO</span>CAMP
         </h1>
-        <p className="text-gray-400 text-lg mb-6 tracking-wide leading-relaxed">
+        <p className="text-gray-400 text-lg mb-6 tracking-wide leading-relaxed animate-fade-in-up animate-delay-200">
           Are you looking for SOMETHING MORE?? Whatever your past may be, if you are willing to work hard to change your future;
           We have BROCAMP for you.
         </p>
-        <p className="text-gray-500 text-sm mb-10 tracking-wide uppercase">BROTHER YOU NEVER HAD</p>
+        <p className="text-gray-500 text-sm mb-10 tracking-wide uppercase animate-fade-in animate-delay-300">BROTHER YOU NEVER HAD</p>
         
-        <div className="flex gap-4 justify-center">
+        <div className="flex gap-4 justify-center animate-fade-in-up animate-delay-400">
           <Button
             onClick={() => navigate('/auth')}
-            className="bg-white text-black hover:bg-gray-200 font-medium tracking-wider px-8"
+            className="bg-white text-black hover:bg-gray-200 font-medium tracking-wider px-8 hover-scale hover-glow"
           >
             ENTER BROCAMP
           </Button>
         </div>
 
-        <div className="mt-16 pt-8 border-t border-gray-900">
+        <div className="mt-16 pt-8 border-t border-gray-900 animate-fade-in animate-delay-500">
           <p className="text-xs text-gray-600 tracking-wider">
             PREMIUM · FUTURISTIC · MINIMAL
           </p>
