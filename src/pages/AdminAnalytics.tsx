@@ -22,7 +22,7 @@ export default function AdminAnalytics() {
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2 tracking-tight">Analytics Dashboard</h1>
-            <p className="text-gray-400 text-sm">Campus metrics and insights</p>
+            <p className="text-gray-400 text-sm">BROCAMP metrics and insights</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -53,7 +53,7 @@ export default function AdminAnalytics() {
 
           <div className="border border-gray-850 p-12 text-center">
             <p className="text-gray-500 mb-2">Analytics features coming soon</p>
-            <p className="text-xs text-gray-600">Track user engagement, complaint trends, and campus metrics</p>
+            <p className="text-xs text-gray-600">Track user engagement, complaint trends, and BROCAMP metrics</p>
           </div>
         </div>
       </main>
