@@ -29,7 +29,7 @@ const Index = () => {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="text-center max-w-2xl">
         <h1 className="text-7xl font-bold mb-6 tracking-tighter">
-          <span className="bg-white text-black px-2">BRO</span>CAMPUS
+          <span className="bg-white text-black px-2">BRO</span>CAMP
         </h1>
         <p className="text-gray-400 text-lg mb-6 tracking-wide leading-relaxed">
           Are you looking for SOMETHING MORE?? Whatever your past may be, if you are willing to work hard to change your future;
@@ -42,7 +42,7 @@ const Index = () => {
             onClick={() => navigate('/auth')}
             className="bg-white text-black hover:bg-gray-200 font-medium tracking-wider px-8"
           >
-            ENTER CAMPUS
+            ENTER BROCAMP
           </Button>
         </div>
 

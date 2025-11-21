@@ -19,7 +19,7 @@ export default function AdminDashboard() {
       <header className="border-b border-gray-850 p-4 flex justify-between items-center">
         <div className="flex items-center gap-8">
           <h1 className="text-2xl font-bold tracking-tighter">
-            <span className="bg-white text-black px-2">BRO</span>CAMPUS
+            <span className="bg-white text-black px-2">BRO</span>CAMP
           </h1>
           <span className="text-xs text-gray-500 tracking-wider">ADMIN CONTROL</span>
         </div>
@@ -41,7 +41,7 @@ export default function AdminDashboard() {
         <div className="max-w-6xl mx-auto">
           <div className="mb-12">
             <h2 className="text-4xl font-bold mb-2 tracking-tight">Admin Dashboard</h2>
-            <p className="text-gray-400 text-sm">Manage campus ecosystem</p>
+            <p className="text-gray-400 text-sm">Manage BROCAMP ecosystem</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
