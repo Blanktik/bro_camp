@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film, Check, Info } from 'lucide-react';
+import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film, Check, Info, Edit2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 
@@ -36,6 +36,7 @@ export default function StudentComplaints() {
   const [fetchLoading, setFetchLoading] = useState(true);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [editingComplaint, setEditingComplaint] = useState<string | null>(null);
 
   useEffect(() => {
     fetchComplaints();
@@ -122,29 +123,67 @@ export default function StudentComplaints() {
     try {
       const mediaUrls = await uploadMedia();
 
-      const { error } = await supabase.from('complaints').insert({
-        user_id: user.id,
-        title,
-        description,
-        is_anonymous: isAnonymous,
-        status: 'pending',
-        media_urls: mediaUrls.length > 0 ? mediaUrls : null,
-      });
+      if (editingComplaint) {
+        // Update existing complaint
+        const { error } = await supabase
+          .from('complaints')
+          .update({
+            title,
+            description,
+            media_urls: mediaUrls.length > 0 ? mediaUrls : null,
+          })
+          .eq('id', editingComplaint);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success('Complaint updated successfully');
+      } else {
+        // Create new complaint
+        const { error } = await supabase.from('complaints').insert({
+          user_id: user.id,
+          title,
+          description,
+          is_anonymous: isAnonymous,
+          status: 'pending',
+          media_urls: mediaUrls.length > 0 ? mediaUrls : null,
+        });
 
-      toast.success('Complaint submitted successfully');
+        if (error) throw error;
+        toast.success('Complaint submitted successfully');
+      }
+
       setTitle('');
       setDescription('');
       setIsAnonymous(false);
       setSelectedFiles([]);
       setShowForm(false);
+      setEditingComplaint(null);
       fetchComplaints();
     } catch (error: any) {
       toast.error(error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const startEdit = (complaint: Complaint) => {
+    if (complaint.viewed_at || complaint.admin_response) {
+      toast.error('Cannot edit complaint after admin has viewed or responded');
+      return;
+    }
+    setTitle(complaint.title);
+    setDescription(complaint.description);
+    setSelectedFiles([]);
+    setEditingComplaint(complaint.id);
+    setShowForm(true);
+  };
+
+  const cancelEdit = () => {
+    setTitle('');
+    setDescription('');
+    setIsAnonymous(false);
+    setSelectedFiles([]);
+    setShowForm(false);
+    setEditingComplaint(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -185,24 +224,32 @@ export default function StudentComplaints() {
           {showForm ? (
             <>
               <div className="mb-8">
-                <h1 className="text-4xl font-bold mb-2 tracking-tight">Submit Complaint</h1>
-                <p className="text-gray-400 text-sm">Your voice matters. Submit anonymously if needed.</p>
+                <h1 className="text-4xl font-bold mb-2 tracking-tight">
+                  {editingComplaint ? 'Edit Complaint' : 'Submit Complaint'}
+                </h1>
+                <p className="text-gray-400 text-sm">
+                  {editingComplaint 
+                    ? 'Update your complaint details before admin review' 
+                    : 'Your voice matters. Submit anonymously if needed.'}
+                </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6 border border-gray-850 p-8">
-                <div className="flex items-center justify-between pb-6 border-b border-gray-850">
-                  <div>
-                    <Label htmlFor="anonymous" className="text-sm font-medium">
-                      Submit Anonymously
-                    </Label>
-                    <p className="text-xs text-gray-500 mt-1">Your identity will be hidden</p>
+                {!editingComplaint && (
+                  <div className="flex items-center justify-between pb-6 border-b border-gray-850">
+                    <div>
+                      <Label htmlFor="anonymous" className="text-sm font-medium">
+                        Submit Anonymously
+                      </Label>
+                      <p className="text-xs text-gray-500 mt-1">Your identity will be hidden</p>
+                    </div>
+                    <Switch
+                      id="anonymous"
+                      checked={isAnonymous}
+                      onCheckedChange={setIsAnonymous}
+                    />
                   </div>
-                  <Switch
-                    id="anonymous"
-                    checked={isAnonymous}
-                    onCheckedChange={setIsAnonymous}
-                  />
-                </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="title" className="text-xs tracking-wider text-gray-400">
@@ -285,7 +332,7 @@ export default function StudentComplaints() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setShowForm(false)}
+                    onClick={cancelEdit}
                     className="flex-1 border-gray-850 text-gray-400 hover:text-white hover:border-white"
                   >
                     CANCEL
@@ -295,7 +342,7 @@ export default function StudentComplaints() {
                     disabled={loading || uploadingFiles}
                     className="flex-1 bg-white text-black hover:bg-gray-200 font-medium tracking-wider"
                   >
-                    {uploadingFiles ? 'UPLOADING...' : loading ? 'SUBMITTING...' : 'SUBMIT COMPLAINT'}
+                    {uploadingFiles ? 'UPLOADING...' : loading ? (editingComplaint ? 'UPDATING...' : 'SUBMITTING...') : (editingComplaint ? 'UPDATE COMPLAINT' : 'SUBMIT COMPLAINT')}
                   </Button>
                 </div>
               </form>
@@ -338,33 +385,55 @@ export default function StudentComplaints() {
                             })}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-0.5">
-                            {complaint.viewed_at ? (
-                              <>
-                                <Check className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" strokeWidth={3} />
-                                <Check className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] -ml-2.5" strokeWidth={3} />
-                              </>
-                            ) : (
-                              <Check className="w-4 h-4 text-gray-600" strokeWidth={3} />
-                            )}
-                          </div>
+                        <div className="flex items-center gap-3">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Info className="w-3 h-3 text-gray-500 hover:text-gray-300 cursor-help transition-colors" />
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => startEdit(complaint)}
+                                  disabled={!!complaint.viewed_at || !!complaint.admin_response}
+                                  className="h-8 px-2 disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </Button>
                               </TooltipTrigger>
-                              <TooltipContent side="left" className="bg-black border-gray-850 text-white text-xs max-w-xs">
-                                <p className="mb-1">One tick: Complaint sent</p>
-                                <p>Two ticks: Viewed by admin</p>
-                                {complaint.viewed_at && (
-                                  <p className="mt-2 pt-2 border-t border-gray-800 text-gray-400">
-                                    Viewed: {format(new Date(complaint.viewed_at), 'MMM d, yyyy h:mm a')}
-                                  </p>
-                                )}
-                              </TooltipContent>
+                              {(complaint.viewed_at || complaint.admin_response) && (
+                                <TooltipContent side="left" className="bg-black border-gray-850 text-white text-xs">
+                                  <p>Cannot edit after admin {complaint.admin_response ? 'response' : 'viewed'}</p>
+                                </TooltipContent>
+                              )}
                             </Tooltip>
                           </TooltipProvider>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-0.5">
+                              {complaint.viewed_at ? (
+                                <>
+                                  <Check className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" strokeWidth={3} />
+                                  <Check className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] -ml-2.5" strokeWidth={3} />
+                                </>
+                              ) : (
+                                <Check className="w-4 h-4 text-gray-600" strokeWidth={3} />
+                              )}
+                            </div>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Info className="w-3 h-3 text-gray-500 hover:text-gray-300 cursor-help transition-colors" />
+                                </TooltipTrigger>
+                                <TooltipContent side="left" className="bg-black border-gray-850 text-white text-xs max-w-xs">
+                                  <p className="mb-1">One tick: Complaint sent</p>
+                                  <p>Two ticks: Viewed by admin</p>
+                                  {complaint.viewed_at && (
+                                    <p className="mt-2 pt-2 border-t border-gray-800 text-gray-400">
+                                      Viewed: {format(new Date(complaint.viewed_at), 'MMM d, yyyy h:mm a')}
+                                    </p>
+                                  )}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
                         </div>
                       </div>
 
