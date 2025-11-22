@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film } from 'lucide-react';
 
 interface Complaint {
   id: string;
@@ -18,6 +18,7 @@ interface Complaint {
   status: string;
   admin_response: string | null;
   created_at: string;
+  media_urls: string[] | null;
 }
 
 export default function StudentComplaints() {
@@ -30,6 +31,8 @@ export default function StudentComplaints() {
   const [description, setDescription] = useState('');
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [fetchLoading, setFetchLoading] = useState(true);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   useEffect(() => {
     fetchComplaints();
@@ -54,18 +57,75 @@ export default function StudentComplaints() {
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles = files.filter(file => {
+      const isValidType = file.type.startsWith('image/') || file.type.startsWith('video/');
+      const isValidSize = file.size <= 20 * 1024 * 1024; // 20MB limit
+      
+      if (!isValidType) {
+        toast.error(`${file.name} is not a valid image or video`);
+        return false;
+      }
+      if (!isValidSize) {
+        toast.error(`${file.name} exceeds 20MB limit`);
+        return false;
+      }
+      return true;
+    });
+
+    setSelectedFiles(prev => [...prev, ...validFiles].slice(0, 5)); // Max 5 files
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadMedia = async (): Promise<string[]> => {
+    if (selectedFiles.length === 0) return [];
+    
+    setUploadingFiles(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const file of selectedFiles) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user!.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('complaint-media')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('complaint-media')
+          .getPublicUrl(fileName);
+
+        uploadedUrls.push(publicUrl);
+      }
+    } finally {
+      setUploadingFiles(false);
+    }
+
+    return uploadedUrls;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     setLoading(true);
     try {
+      const mediaUrls = await uploadMedia();
+
       const { error } = await supabase.from('complaints').insert({
-        user_id: user.id, // Always store user_id so students can see responses
+        user_id: user.id,
         title,
         description,
         is_anonymous: isAnonymous,
         status: 'pending',
+        media_urls: mediaUrls.length > 0 ? mediaUrls : null,
       });
 
       if (error) throw error;
@@ -74,6 +134,7 @@ export default function StudentComplaints() {
       setTitle('');
       setDescription('');
       setIsAnonymous(false);
+      setSelectedFiles([]);
       setShowForm(false);
       fetchComplaints();
     } catch (error: any) {
@@ -172,6 +233,51 @@ export default function StudentComplaints() {
                   <p className="text-xs text-gray-500 text-right">{description.length}/1000</p>
                 </div>
 
+                <div className="space-y-2">
+                  <Label className="text-xs tracking-wider text-gray-400">
+                    MEDIA (OPTIONAL)
+                  </Label>
+                  <div className="border border-gray-850 border-dashed p-4 text-center hover:border-gray-700 transition-colors">
+                    <input
+                      type="file"
+                      id="media-upload"
+                      multiple
+                      accept="image/*,video/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="media-upload"
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                    >
+                      <Upload className="w-8 h-8 text-gray-500" />
+                      <p className="text-sm text-gray-400">Upload images or videos (max 5 files, 20MB each)</p>
+                    </label>
+                  </div>
+
+                  {selectedFiles.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className="relative border border-gray-850 p-2 flex items-center gap-2">
+                          {file.type.startsWith('image/') ? (
+                            <ImageIcon className="w-4 h-4 text-gray-400" />
+                          ) : (
+                            <Film className="w-4 h-4 text-gray-400" />
+                          )}
+                          <span className="text-xs text-gray-400 truncate flex-1">{file.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeFile(index)}
+                            className="text-gray-500 hover:text-white"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex gap-3">
                   <Button
                     type="button"
@@ -183,10 +289,10 @@ export default function StudentComplaints() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || uploadingFiles}
                     className="flex-1 bg-white text-black hover:bg-gray-200 font-medium tracking-wider"
                   >
-                    {loading ? 'SUBMITTING...' : 'SUBMIT COMPLAINT'}
+                    {uploadingFiles ? 'UPLOADING...' : loading ? 'SUBMITTING...' : 'SUBMIT COMPLAINT'}
                   </Button>
                 </div>
               </form>
@@ -234,6 +340,26 @@ export default function StudentComplaints() {
                       <p className="text-gray-300 mb-4 text-sm leading-relaxed">
                         {complaint.description}
                       </p>
+
+                      {complaint.media_urls && complaint.media_urls.length > 0 && (
+                        <div className="mb-4 grid grid-cols-2 gap-2">
+                          {complaint.media_urls.map((url, idx) => (
+                            <a
+                              key={idx}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="border border-gray-850 hover:border-gray-700 transition-colors overflow-hidden aspect-video"
+                            >
+                              {url.includes('.mp4') || url.includes('.mov') || url.includes('.webm') ? (
+                                <video src={url} className="w-full h-full object-cover" controls />
+                              ) : (
+                                <img src={url} alt="Complaint media" className="w-full h-full object-cover" />
+                              )}
+                            </a>
+                          ))}
+                        </div>
+                      )}
 
                       {complaint.admin_response && (
                         <div className="border-t border-gray-850 pt-4 mt-4">

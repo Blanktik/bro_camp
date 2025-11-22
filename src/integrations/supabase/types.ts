@@ -21,6 +21,7 @@ export type Database = {
           description: string
           id: string
           is_anonymous: boolean
+          media_urls: string[] | null
           status: string | null
           title: string
           updated_at: string
@@ -32,6 +33,7 @@ export type Database = {
           description: string
           id?: string
           is_anonymous?: boolean
+          media_urls?: string[] | null
           status?: string | null
           title: string
           updated_at?: string
@@ -43,6 +45,7 @@ export type Database = {
           description?: string
           id?: string
           is_anonymous?: boolean
+          media_urls?: string[] | null
           status?: string | null
           title?: string
           updated_at?: string

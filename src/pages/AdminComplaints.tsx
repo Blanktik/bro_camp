@@ -16,6 +16,7 @@ interface Complaint {
   admin_response: string | null;
   created_at: string;
   profiles: { full_name: string } | null;
+  media_urls: string[] | null;
 }
 
 const quickMacros = [
@@ -185,6 +186,26 @@ export default function AdminComplaints() {
                   <p className="text-gray-300 mb-4 text-sm leading-relaxed">
                     {complaint.description}
                   </p>
+
+                  {complaint.media_urls && complaint.media_urls.length > 0 && (
+                    <div className="mb-4 grid grid-cols-3 gap-2">
+                      {complaint.media_urls.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="border border-gray-850 hover:border-gray-700 transition-colors overflow-hidden aspect-video"
+                        >
+                          {url.includes('.mp4') || url.includes('.mov') || url.includes('.webm') ? (
+                            <video src={url} className="w-full h-full object-cover" controls />
+                          ) : (
+                            <img src={url} alt="Complaint media" className="w-full h-full object-cover" />
+                          )}
+                        </a>
+                      ))}
+                    </div>
+                  )}
 
                   {complaint.status === 'pending' && (
                     <div className="space-y-4">
