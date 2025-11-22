@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film, Check } from 'lucide-react';
+import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film, Check, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Complaint {
   id: string;
@@ -336,15 +337,28 @@ export default function StudentComplaints() {
                             })}
                           </p>
                         </div>
-                        <div className="flex items-center gap-0.5">
-                          {complaint.viewed_at ? (
-                            <>
-                              <Check className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" strokeWidth={3} />
-                              <Check className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] -ml-2.5" strokeWidth={3} />
-                            </>
-                          ) : (
-                            <Check className="w-4 h-4 text-gray-600" strokeWidth={3} />
-                          )}
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-0.5">
+                            {complaint.viewed_at ? (
+                              <>
+                                <Check className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" strokeWidth={3} />
+                                <Check className="w-4 h-4 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] -ml-2.5" strokeWidth={3} />
+                              </>
+                            ) : (
+                              <Check className="w-4 h-4 text-gray-600" strokeWidth={3} />
+                            )}
+                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="w-3 h-3 text-gray-500 hover:text-gray-300 cursor-help transition-colors" />
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="bg-black border-gray-850 text-white text-xs max-w-xs">
+                                <p>One tick: Complaint sent</p>
+                                <p>Two ticks: Viewed by admin</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       </div>
 
