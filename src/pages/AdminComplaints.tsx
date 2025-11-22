@@ -17,6 +17,7 @@ interface Complaint {
   created_at: string;
   profiles: { full_name: string } | null;
   media_urls: string[] | null;
+  viewed_at: string | null;
 }
 
 const quickMacros = [
@@ -68,6 +69,19 @@ export default function AdminComplaints() {
       toast.error(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const markAsViewed = async (complaintId: string, currentViewedAt: string | null) => {
+    if (currentViewedAt) return; // Already viewed
+    
+    try {
+      await supabase
+        .from('complaints')
+        .update({ viewed_at: new Date().toISOString() })
+        .eq('id', complaintId);
+    } catch (error) {
+      console.error('Error marking complaint as viewed:', error);
     }
   };
 
@@ -199,6 +213,7 @@ export default function AdminComplaints() {
                 <div
                   key={complaint.id}
                   className="border border-gray-850 p-6 hover:border-gray-700 transition-colors"
+                  onMouseEnter={() => markAsViewed(complaint.id, complaint.viewed_at)}
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
