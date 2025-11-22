@@ -38,7 +38,7 @@ export default function Auth() {
         setShowLoadingScreen(true);
         setTimeout(() => {
           navigate('/student');
-        }, 2000);
+        }, 3000);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -50,7 +50,7 @@ export default function Auth() {
         setShowLoadingScreen(true);
         setTimeout(() => {
           navigate('/');
-        }, 2000);
+        }, 3000);
       }
     } catch (error: any) {
       toast.error(error.message);
