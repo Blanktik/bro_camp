@@ -45,7 +45,7 @@ export default function AdminComplaints() {
   const [selectedStatus, setSelectedStatus] = useState<'in_progress' | 'resolved'>('resolved');
   const [editingInProgress, setEditingInProgress] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'in_progress' | 'resolved'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'in_progress' | 'resolved' | 'voice_notes'>('all');
 
   useEffect(() => {
     fetchComplaints();
@@ -56,7 +56,9 @@ export default function AdminComplaints() {
     let filtered = complaints;
 
     // Apply status filter
-    if (statusFilter !== 'all') {
+    if (statusFilter === 'voice_notes') {
+      filtered = filtered.filter(c => c.voice_note_url);
+    } else if (statusFilter !== 'all') {
       filtered = filtered.filter(c => c.status === statusFilter);
     }
 
@@ -440,7 +442,7 @@ export default function AdminComplaints() {
               />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button
                 variant={statusFilter === 'all' ? 'default' : 'outline'}
                 onClick={() => setStatusFilter('all')}
@@ -472,6 +474,14 @@ export default function AdminComplaints() {
                 className={statusFilter === 'resolved' ? 'bg-white text-black' : 'border-gray-850 text-gray-400'}
               >
                 RESOLVED ({complaints.filter(c => c.status === 'resolved').length})
+              </Button>
+              <Button
+                variant={statusFilter === 'voice_notes' ? 'default' : 'outline'}
+                onClick={() => setStatusFilter('voice_notes')}
+                size="sm"
+                className={statusFilter === 'voice_notes' ? 'bg-white text-black' : 'border-gray-850 text-gray-400'}
+              >
+                VOICE NOTES ({complaints.filter(c => c.voice_note_url).length})
               </Button>
             </div>
           </div>
