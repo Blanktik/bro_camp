@@ -340,8 +340,10 @@ export default function AdminComplaints() {
           <div class="media-grid">
             ${complaint.media_urls.map(url => `
               <div class="media-item">
-                ${url.includes('.mp4') || url.includes('.mov') || url.includes('.webm') ? '🎥 Video' : '🖼️ Image'}
-                <br><a href="${url}" target="_blank" style="color: #666; font-size: 10px;">View</a>
+                ${url.includes('.mp4') || url.includes('.mov') || url.includes('.webm') 
+                  ? `<video src="${url}" controls style="width: 100%; height: 100%; object-fit: cover;"></video>` 
+                  : `<img src="${url}" alt="Complaint media" style="width: 100%; height: 100%; object-fit: cover;" />`
+                }
               </div>
             `).join('')}
           </div>
