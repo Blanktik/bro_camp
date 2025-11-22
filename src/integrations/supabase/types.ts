@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       complaints: {
         Row: {
+          admin_id: string | null
           admin_response: string | null
           created_at: string
           description: string
@@ -23,6 +24,7 @@ export type Database = {
           id: string
           is_anonymous: boolean
           media_urls: string[] | null
+          responded_at: string | null
           status: string | null
           title: string
           updated_at: string
@@ -31,6 +33,7 @@ export type Database = {
           voice_note_url: string | null
         }
         Insert: {
+          admin_id?: string | null
           admin_response?: string | null
           created_at?: string
           description: string
@@ -38,6 +41,7 @@ export type Database = {
           id?: string
           is_anonymous?: boolean
           media_urls?: string[] | null
+          responded_at?: string | null
           status?: string | null
           title: string
           updated_at?: string
@@ -46,6 +50,7 @@ export type Database = {
           voice_note_url?: string | null
         }
         Update: {
+          admin_id?: string | null
           admin_response?: string | null
           created_at?: string
           description?: string
@@ -53,6 +58,7 @@ export type Database = {
           id?: string
           is_anonymous?: boolean
           media_urls?: string[] | null
+          responded_at?: string | null
           status?: string | null
           title?: string
           updated_at?: string

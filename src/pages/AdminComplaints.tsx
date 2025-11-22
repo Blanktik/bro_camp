@@ -25,6 +25,9 @@ interface Complaint {
   viewed_at: string | null;
   edited_at: string | null;
   voice_note_url: string | null;
+  admin_id: string | null;
+  responded_at: string | null;
+  admin_profile?: { full_name: string; email: string } | null;
 }
 
 const quickMacros = [
@@ -90,17 +93,26 @@ export default function AdminComplaints() {
         .filter(c => c.user_id)
         .map(c => c.user_id);
 
+      const adminIds = complaintsData
+        .filter(c => c.admin_id)
+        .map(c => c.admin_id);
+
+      const allProfileIds = [...new Set([...userIds, ...adminIds])];
+
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('id, full_name, email')
-        .in('id', userIds);
+        .in('id', allProfileIds);
 
       // Merge data and hide identity for anonymous complaints
       const complaints = complaintsData.map(complaint => ({
         ...complaint,
         profiles: complaint.is_anonymous
           ? { full_name: 'Anonymous', email: '' }
-          : (profilesData?.find(p => p.id === complaint.user_id) || null)
+          : (profilesData?.find(p => p.id === complaint.user_id) || null),
+        admin_profile: complaint.admin_id 
+          ? profilesData?.find(p => p.id === complaint.admin_id) 
+          : null
       }));
 
       setComplaints(complaints);
@@ -126,11 +138,15 @@ export default function AdminComplaints() {
 
   const handleQuickMacro = async (complaintId: string, macroResponse: string, status: string) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { error } = await supabase
         .from('complaints')
         .update({
           admin_response: macroResponse,
           status: status,
+          admin_id: user?.id,
+          responded_at: new Date().toISOString(),
         })
         .eq('id', complaintId);
 
@@ -145,11 +161,15 @@ export default function AdminComplaints() {
 
   const handleRespond = async (complaintId: string) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { error } = await supabase
         .from('complaints')
         .update({
           admin_response: response,
           status: selectedStatus,
+          admin_id: user?.id,
+          responded_at: new Date().toISOString(),
         })
         .eq('id', complaintId);
 
@@ -362,6 +382,12 @@ export default function AdminComplaints() {
           <div class="admin-response">
             <div class="response-label">Admin Response</div>
             <div>${complaint.admin_response}</div>
+            ${complaint.admin_profile ? `
+              <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #222; color: #666; font-size: 12px;">
+                <strong>Responded by:</strong> ${complaint.admin_profile.full_name} (${complaint.admin_profile.email})
+                ${complaint.responded_at ? `<br><strong>Responded at:</strong> ${new Date(complaint.responded_at).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}
+              </div>
+            ` : ''}
           </div>
         ` : ''}
       </div>
