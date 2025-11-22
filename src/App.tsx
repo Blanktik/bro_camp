@@ -15,7 +15,6 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminComplaints from "./pages/AdminComplaints";
 import AdminUsers from "./pages/AdminUsers";
 import AdminModeration from "./pages/AdminModeration";
-import AdminCallHistory from "./pages/AdminCallHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -171,22 +170,6 @@ function AnimatedRoutes() {
                 transition={pageTransition}
               >
                 <AdminModeration />
-              </motion.div>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/calls"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                transition={pageTransition}
-              >
-                <AdminCallHistory />
               </motion.div>
             </ProtectedRoute>
           }
