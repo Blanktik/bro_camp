@@ -15,7 +15,7 @@ interface Complaint {
   status: string;
   admin_response: string | null;
   created_at: string;
-  profiles: { full_name: string } | null;
+  profiles: { full_name: string; email: string } | null;
   media_urls: string[] | null;
   viewed_at: string | null;
   edited_at: string | null;
@@ -54,14 +54,14 @@ export default function AdminComplaints() {
 
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, full_name')
+        .select('id, full_name, email')
         .in('id', userIds);
 
       // Merge data and hide identity for anonymous complaints
       const complaints = complaintsData.map(complaint => ({
         ...complaint,
         profiles: complaint.is_anonymous
-          ? { full_name: 'Anonymous' }
+          ? { full_name: 'Anonymous', email: '' }
           : (profilesData?.find(p => p.id === complaint.user_id) || null)
       }));
 
@@ -240,6 +240,12 @@ export default function AdminComplaints() {
                             ? 'Anonymous'
                             : (complaint.profiles?.full_name || 'Unknown User')}
                         </span>
+                        {!complaint.is_anonymous && complaint.profiles?.email && (
+                          <>
+                            <span>•</span>
+                            <span>{complaint.profiles.email}</span>
+                          </>
+                        )}
                         <span>•</span>
                         <span>
                           {new Date(complaint.created_at).toLocaleDateString('en-US', {
