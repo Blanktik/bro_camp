@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_status: {
+        Row: {
+          admin_id: string
+          id: string
+          is_dnd: boolean
+          is_online: boolean
+          last_seen: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          id?: string
+          is_dnd?: boolean
+          is_online?: boolean
+          last_seen?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          id?: string
+          is_dnd?: boolean
+          is_online?: boolean
+          last_seen?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      calls: {
+        Row: {
+          attended_at: string | null
+          attended_by: string | null
+          call_title: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          status: string
+          student_email: string
+          student_id: string
+          student_name: string
+          voice_note_url: string | null
+        }
+        Insert: {
+          attended_at?: string | null
+          attended_by?: string | null
+          call_title: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          student_email: string
+          student_id: string
+          student_name: string
+          voice_note_url?: string | null
+        }
+        Update: {
+          attended_at?: string | null
+          attended_by?: string | null
+          call_title?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          student_email?: string
+          student_id?: string
+          student_name?: string
+          voice_note_url?: string | null
+        }
+        Relationships: []
+      }
       complaints: {
         Row: {
           admin_response: string | null
