@@ -10,6 +10,7 @@ import { LoadingScreen } from '@/components/LoadingScreen';
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showLoadingScreen, setShowLoadingScreen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -34,7 +35,10 @@ export default function Auth() {
 
         if (error) throw error;
         toast.success('Account created! Redirecting...');
-        navigate('/student');
+        setShowLoadingScreen(true);
+        setTimeout(() => {
+          navigate('/student');
+        }, 3000);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -43,16 +47,18 @@ export default function Auth() {
 
         if (error) throw error;
         toast.success('Signed in successfully!');
-        navigate('/');
+        setShowLoadingScreen(true);
+        setTimeout(() => {
+          navigate('/');
+        }, 3000);
       }
     } catch (error: any) {
       toast.error(error.message);
-    } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
+  if (showLoadingScreen) {
     return <LoadingScreen />;
   }
 
