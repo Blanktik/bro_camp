@@ -365,16 +365,27 @@ export default function AdminComplaints() {
                         >
                           CUSTOM RESPONSE
                         </Button>
-                      )}
-                    </div>
                   )}
+                </div>
+              )}
 
-                  {complaint.admin_response && (
-                    <div className="border-t border-gray-850 pt-4 mt-4">
-                      <p className="text-xs text-gray-500 mb-2 tracking-wider">ADMIN RESPONSE</p>
-                      <p className="text-sm text-gray-300">{complaint.admin_response}</p>
-                    </div>
-                  )}
+              {complaint.status === 'in_progress' && (
+                <div className="pt-4 border-t border-gray-850">
+                  <Button
+                    onClick={() => handleQuickMacro(complaint.id, complaint.admin_response || '', 'resolved')}
+                    className="bg-white text-black hover:bg-gray-200 text-xs h-8"
+                  >
+                    MARK AS RESOLVED
+                  </Button>
+                </div>
+              )}
+
+              {complaint.admin_response && (
+                <div className="border-t border-gray-850 pt-4 mt-4">
+                  <p className="text-xs text-gray-500 mb-2 tracking-wider">ADMIN RESPONSE</p>
+                  <p className="text-sm text-gray-300">{complaint.admin_response}</p>
+                </div>
+              )}
                 </div>
               ))
             )}
