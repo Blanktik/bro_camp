@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { ArrowLeft, UserX, Bell, Eye, CheckCircle2, Download, ArrowUpCircle, HelpCircle, Copy } from 'lucide-react';
 
@@ -294,18 +295,26 @@ export default function AdminComplaints() {
                     <div className="space-y-4">
                       <div className="flex gap-2 pb-4 border-b border-gray-850">
                         <span className="text-xs text-gray-500 tracking-wider">QUICK MACRO:</span>
-                        {quickMacros.map((macro) => (
-                          <Button
-                            key={macro.label}
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleQuickMacro(complaint.id, macro.response, macro.status)}
-                            className="border-gray-850 text-gray-400 hover:text-white hover:border-white h-7 px-3 text-xs"
-                          >
-                            <macro.icon className="w-3 h-3 mr-1" />
-                            {macro.label}
-                          </Button>
-                        ))}
+                        <TooltipProvider>
+                          {quickMacros.map((macro) => (
+                            <Tooltip key={macro.label}>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleQuickMacro(complaint.id, macro.response, macro.status)}
+                                  className="border-gray-850 text-gray-400 hover:text-white hover:border-white h-7 px-3 text-xs"
+                                >
+                                  <macro.icon className="w-3 h-3 mr-1" />
+                                  {macro.label}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-gray-900 border-gray-850 text-gray-300 max-w-xs">
+                                <p className="text-xs">{macro.response}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          ))}
+                        </TooltipProvider>
                       </div>
 
                       {selectedComplaint?.id === complaint.id ? (
