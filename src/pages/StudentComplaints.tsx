@@ -9,9 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film, Check, Info, Edit2 } from 'lucide-react';
+import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film, Check, Info, Edit2, Users } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
+import { CallAdminButton } from '@/components/CallAdminButton';
+import { useAdminStatus } from '@/hooks/useAdminStatus';
 
 interface Complaint {
   id: string;
@@ -29,6 +31,7 @@ interface Complaint {
 export default function StudentComplaints() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { onlineAdminsCount } = useAdminStatus();
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -212,13 +215,20 @@ export default function StudentComplaints() {
           BACK
         </Button>
         {!showForm && (
-          <Button
-            onClick={() => setShowForm(true)}
-            className="bg-white text-black hover:bg-gray-200"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            NEW COMPLAINT
-          </Button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1 border border-gray-850 text-xs">
+              <Users className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-400">{onlineAdminsCount} ADMINS ONLINE</span>
+            </div>
+            <CallAdminButton />
+            <Button
+              onClick={() => setShowForm(true)}
+              className="bg-white text-black hover:bg-gray-200"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              NEW COMPLAINT
+            </Button>
+          </div>
         )}
       </header>
 

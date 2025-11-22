@@ -8,7 +8,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { ArrowLeft, UserX, Bell, Eye, CheckCircle2, Download, ArrowUpCircle, HelpCircle, Copy } from 'lucide-react';
+import { ArrowLeft, UserX, Bell, Eye, CheckCircle2, Download, ArrowUpCircle, HelpCircle, Copy, BellOff } from 'lucide-react';
+import { IncomingCallsPanel } from '@/components/IncomingCallsPanel';
+import { useAdminStatus } from '@/hooks/useAdminStatus';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Complaint {
   id: string;
@@ -34,6 +37,7 @@ const quickMacros = [
 
 export default function AdminComplaints() {
   const navigate = useNavigate();
+  const { isDnd, toggleDnd } = useAdminStatus();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
@@ -183,7 +187,9 @@ export default function AdminComplaints() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-gray-850 p-4">
+      {!isDnd && <IncomingCallsPanel />}
+      
+      <header className="border-b border-gray-850 p-4 flex justify-between items-center">
         <Button
           onClick={() => navigate('/admin')}
           variant="ghost"
@@ -191,6 +197,15 @@ export default function AdminComplaints() {
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           BACK
+        </Button>
+        
+        <Button
+          onClick={toggleDnd}
+          variant={isDnd ? "default" : "outline"}
+          className={isDnd ? "bg-white text-black hover:bg-gray-200" : "border-gray-850 text-gray-400 hover:text-white hover:border-white"}
+        >
+          <BellOff className="w-4 h-4 mr-2" />
+          {isDnd ? 'DND ON' : 'DND OFF'}
         </Button>
       </header>
 
@@ -212,7 +227,23 @@ export default function AdminComplaints() {
             </Button>
           </div>
 
-          <div className="space-y-4">
+          <Tabs defaultValue="complaints" className="space-y-4">
+            <TabsList className="bg-transparent border border-gray-850 p-0 h-auto">
+              <TabsTrigger 
+                value="complaints" 
+                className="data-[state=active]:bg-white data-[state=active]:text-black px-6 py-2"
+              >
+                COMPLAINTS
+              </TabsTrigger>
+              <TabsTrigger 
+                value="voice-notes" 
+                className="data-[state=active]:bg-white data-[state=active]:text-black px-6 py-2"
+              >
+                VOICE NOTES
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="complaints" className="space-y-4">
             {complaints.length === 0 ? (
               <div className="border border-gray-850 p-12 text-center">
                 <p className="text-gray-500">No complaints submitted yet</p>
@@ -439,7 +470,15 @@ export default function AdminComplaints() {
                 </div>
               ))
             )}
-          </div>
+            </TabsContent>
+
+            <TabsContent value="voice-notes" className="space-y-4">
+              <div className="border border-gray-850 p-12 text-center">
+                <p className="text-gray-500">Voice notes feature coming soon...</p>
+                <p className="text-xs text-gray-600 mt-2">Missed calls will be converted to voice notes here</p>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>
