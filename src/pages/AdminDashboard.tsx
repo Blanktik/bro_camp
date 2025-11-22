@@ -1,7 +1,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Users, Calendar, FileText, Shield, BarChart } from 'lucide-react';
+import { Users, FileText, Shield } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { signOut, userRole } = useAuth();
@@ -11,7 +11,6 @@ export default function AdminDashboard() {
     { icon: Users, label: 'User Management', path: '/admin/users' },
     { icon: FileText, label: 'Complaints', path: '/admin/complaints' },
     { icon: Shield, label: 'Moderation', path: '/admin/moderation' },
-    { icon: BarChart, label: 'Analytics', path: '/admin/analytics' },
   ];
 
   return (

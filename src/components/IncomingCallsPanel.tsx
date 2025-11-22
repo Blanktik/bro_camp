@@ -90,10 +90,8 @@ export function IncomingCallsPanel() {
         variant: "destructive",
       });
     } else {
-      toast({
-        title: "Call Attended",
-        description: "You are now attending this call",
-      });
+      // Refresh page to show call mode
+      window.location.reload();
     }
   };
 

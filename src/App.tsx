@@ -14,7 +14,6 @@ import StudentComplaints from "./pages/StudentComplaints";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminComplaints from "./pages/AdminComplaints";
 import AdminUsers from "./pages/AdminUsers";
-import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminModeration from "./pages/AdminModeration";
 import NotFound from "./pages/NotFound";
 
@@ -155,22 +154,6 @@ function AnimatedRoutes() {
                 transition={pageTransition}
               >
                 <AdminUsers />
-              </motion.div>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/analytics"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                transition={pageTransition}
-              >
-                <AdminAnalytics />
               </motion.div>
             </ProtectedRoute>
           }
