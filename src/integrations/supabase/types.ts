@@ -19,6 +19,7 @@ export type Database = {
           admin_response: string | null
           created_at: string
           description: string
+          edited_at: string | null
           id: string
           is_anonymous: boolean
           media_urls: string[] | null
@@ -32,6 +33,7 @@ export type Database = {
           admin_response?: string | null
           created_at?: string
           description: string
+          edited_at?: string | null
           id?: string
           is_anonymous?: boolean
           media_urls?: string[] | null
@@ -45,6 +47,7 @@ export type Database = {
           admin_response?: string | null
           created_at?: string
           description?: string
+          edited_at?: string | null
           id?: string
           is_anonymous?: boolean
           media_urls?: string[] | null

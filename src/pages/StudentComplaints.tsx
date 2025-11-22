@@ -22,6 +22,8 @@ interface Complaint {
   created_at: string;
   media_urls: string[] | null;
   viewed_at: string | null;
+  edited_at: string | null;
+  is_anonymous: boolean;
 }
 
 export default function StudentComplaints() {
@@ -131,6 +133,7 @@ export default function StudentComplaints() {
             title,
             description,
             media_urls: mediaUrls.length > 0 ? mediaUrls : null,
+            edited_at: new Date().toISOString(),
           })
           .eq('id', editingComplaint);
 
@@ -376,6 +379,11 @@ export default function StudentComplaints() {
                             <Badge className={`text-xs tracking-wider ${getStatusColor(complaint.status)}`}>
                               {complaint.status.toUpperCase()}
                             </Badge>
+                            {complaint.is_anonymous && (
+                              <Badge className="text-xs tracking-wider bg-gray-800 text-gray-400">
+                                ANONYMOUS
+                              </Badge>
+                            )}
                           </div>
                           <p className="text-sm text-gray-400">
                             {new Date(complaint.created_at).toLocaleDateString('en-US', {
