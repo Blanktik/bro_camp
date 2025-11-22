@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { format } from 'date-fns';
 import { CallAdminButton } from '@/components/CallAdminButton';
 import { useAdminStatus } from '@/hooks/useAdminStatus';
+import { StudentCallStatus } from '@/components/StudentCallStatus';
 
 interface Complaint {
   id: string;
@@ -205,6 +206,8 @@ export default function StudentComplaints() {
 
   return (
     <div className="min-h-screen">
+      <StudentCallStatus />
+      
       <header className="border-b border-gray-850 p-4 flex justify-between items-center">
         <Button
           onClick={() => navigate('/student')}

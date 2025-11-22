@@ -12,6 +12,8 @@ import { ArrowLeft, UserX, Bell, Eye, CheckCircle2, Download, ArrowUpCircle, Hel
 import { IncomingCallsPanel } from '@/components/IncomingCallsPanel';
 import { useAdminStatus } from '@/hooks/useAdminStatus';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CallMode } from '@/components/CallMode';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Complaint {
   id: string;
@@ -37,6 +39,7 @@ const quickMacros = [
 
 export default function AdminComplaints() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { isDnd, toggleDnd } = useAdminStatus();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +47,32 @@ export default function AdminComplaints() {
   const [response, setResponse] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<'in_progress' | 'resolved'>('resolved');
   const [editingInProgress, setEditingInProgress] = useState<string | null>(null);
+  const [activeCall, setActiveCall] = useState<{
+    id: string;
+    student_name: string;
+    student_email: string;
+    call_title: string;
+  } | null>(null);
+
+  // Check for active calls
+  useEffect(() => {
+    const checkActiveCall = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('calls')
+        .select('*')
+        .eq('attended_by', user.id)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (data) {
+        setActiveCall(data);
+      }
+    };
+
+    checkActiveCall();
+  }, [user]);
 
   useEffect(() => {
     fetchComplaints();
@@ -182,6 +211,19 @@ export default function AdminComplaints() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border border-white border-t-transparent animate-spin" />
       </div>
+    );
+  }
+
+  // Show call mode if admin is in active call
+  if (activeCall) {
+    return (
+      <CallMode
+        callId={activeCall.id}
+        studentName={activeCall.student_name}
+        studentEmail={activeCall.student_email}
+        callTitle={activeCall.call_title}
+        onEndCall={() => setActiveCall(null)}
+      />
     );
   }
 
