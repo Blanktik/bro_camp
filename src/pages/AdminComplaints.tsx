@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { ArrowLeft, UserX, Bell, CheckCircle2, Download, ArrowUpCircle, HelpCircle, Copy, Volume2 } from 'lucide-react';
+import { ArrowLeft, UserX, Bell, CheckCircle2, Download, ArrowUpCircle, HelpCircle, Copy, Volume2, Search } from 'lucide-react';
 import { VoicePlayer } from '@/components/VoicePlayer';
 
 interface Complaint {
@@ -37,15 +38,41 @@ const quickMacros = [
 export default function AdminComplaints() {
   const navigate = useNavigate();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [filteredComplaints, setFilteredComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   const [response, setResponse] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<'in_progress' | 'resolved'>('resolved');
   const [editingInProgress, setEditingInProgress] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'in_progress' | 'resolved'>('all');
 
   useEffect(() => {
     fetchComplaints();
   }, []);
+
+  useEffect(() => {
+    // Filter complaints based on search query and status
+    let filtered = complaints;
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(c => c.status === statusFilter);
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(c => 
+        c.title.toLowerCase().includes(query) ||
+        c.description.toLowerCase().includes(query) ||
+        c.profiles?.full_name.toLowerCase().includes(query) ||
+        c.profiles?.email.toLowerCase().includes(query)
+      );
+    }
+
+    setFilteredComplaints(filtered);
+  }, [complaints, searchQuery, statusFilter]);
 
   const fetchComplaints = async () => {
     try {
@@ -138,32 +165,216 @@ export default function AdminComplaints() {
 
   const handleDownloadReport = () => {
     try {
-      // Prepare CSV content
-      const headers = ['Date', 'Title', 'Description', 'Status', 'Submitted By', 'Admin Response', 'Anonymous'];
-      const csvRows = [headers.join(',')];
+      // Create HTML content
+      const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complaints Report - ${new Date().toLocaleDateString()}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #000; 
+      color: #fff; 
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { 
+      font-size: 48px; 
+      font-weight: bold; 
+      margin-bottom: 10px;
+      letter-spacing: -1px;
+    }
+    .brand { background: #fff; color: #000; padding: 0 8px; display: inline-block; }
+    .meta { 
+      color: #666; 
+      font-size: 14px; 
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #222;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .stat-card {
+      background: #111;
+      border: 1px solid #222;
+      padding: 20px;
+    }
+    .stat-label { color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-value { font-size: 32px; font-weight: bold; margin-top: 8px; }
+    .complaint {
+      background: #111;
+      border: 1px solid #222;
+      padding: 30px;
+      margin-bottom: 20px;
+    }
+    .complaint-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #222;
+    }
+    .complaint-title { font-size: 20px; font-weight: bold; margin-bottom: 8px; }
+    .complaint-meta { color: #666; font-size: 14px; }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      border: 1px solid #222;
+    }
+    .badge-pending { background: #222; color: #999; }
+    .badge-resolved { background: #fff; color: #000; }
+    .badge-in_progress { background: #333; color: #fff; }
+    .complaint-content { margin-bottom: 20px; color: #ccc; }
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .media-item {
+      aspect-ratio: 16/9;
+      background: #222;
+      border: 1px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-size: 12px;
+    }
+    .voice-note {
+      background: #0a0a0a;
+      border: 1px solid #222;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .voice-note-label {
+      color: #666;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .admin-response {
+      background: #0a0a0a;
+      border: 1px solid #222;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    .response-label {
+      color: #666;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .edited-badge {
+      color: #666;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-left: 12px;
+    }
+    audio { width: 100%; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><span class="brand">BRO</span>CAMP Complaints Report</h1>
+    <div class="meta">
+      Generated on ${new Date().toLocaleString()} | Total Complaints: ${filteredComplaints.length}
+    </div>
 
-      complaints.forEach(complaint => {
-        const row = [
-          new Date(complaint.created_at).toLocaleDateString('en-US'),
-          `"${complaint.title.replace(/"/g, '""')}"`,
-          `"${complaint.description.replace(/"/g, '""')}"`,
-          complaint.status,
-          complaint.is_anonymous ? 'Anonymous' : `"${complaint.profiles?.full_name || 'Unknown User'}"`,
-          complaint.admin_response ? `"${complaint.admin_response.replace(/"/g, '""')}"` : 'No response',
-          complaint.is_anonymous ? 'Yes' : 'No',
-        ];
-        csvRows.push(row.join(','));
-      });
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value">${filteredComplaints.filter(c => c.status === 'pending').length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">In Progress</div>
+        <div class="stat-value">${filteredComplaints.filter(c => c.status === 'in_progress').length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Resolved</div>
+        <div class="stat-value">${filteredComplaints.filter(c => c.status === 'resolved').length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">With Voice Notes</div>
+        <div class="stat-value">${filteredComplaints.filter(c => c.voice_note_url).length}</div>
+      </div>
+    </div>
 
-      // Create and download file
-      const csvContent = csvRows.join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    ${filteredComplaints.map(complaint => `
+      <div class="complaint">
+        <div class="complaint-header">
+          <div>
+            <div class="complaint-title">
+              ${complaint.title}
+              ${complaint.edited_at ? '<span class="edited-badge">EDITED</span>' : ''}
+            </div>
+            <div class="complaint-meta">
+              ${complaint.is_anonymous ? '👤 Anonymous' : `${complaint.profiles?.full_name || 'Unknown User'}${complaint.profiles?.email ? ` • ${complaint.profiles.email}` : ''}`}
+              • ${new Date(complaint.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+            </div>
+          </div>
+          <span class="badge badge-${complaint.status}">${complaint.status.toUpperCase().replace('_', ' ')}</span>
+        </div>
+
+        <div class="complaint-content">
+          ${complaint.description}
+        </div>
+
+        ${complaint.media_urls && complaint.media_urls.length > 0 ? `
+          <div class="media-grid">
+            ${complaint.media_urls.map(url => `
+              <div class="media-item">
+                ${url.includes('.mp4') || url.includes('.mov') || url.includes('.webm') ? '🎥 Video' : '🖼️ Image'}
+                <br><a href="${url}" target="_blank" style="color: #666; font-size: 10px;">View</a>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+
+        ${complaint.voice_note_url ? `
+          <div class="voice-note">
+            <div class="voice-note-label">🎤 Voice Note</div>
+            <audio controls src="${complaint.voice_note_url}"></audio>
+          </div>
+        ` : ''}
+
+        ${complaint.admin_response ? `
+          <div class="admin-response">
+            <div class="response-label">Admin Response</div>
+            <div>${complaint.admin_response}</div>
+          </div>
+        ` : ''}
+      </div>
+    `).join('')}
+  </div>
+</body>
+</html>
+      `;
+
+      // Create and download HTML file
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       const date = new Date().toISOString().split('T')[0];
       
       link.setAttribute('href', url);
-      link.setAttribute('download', `complaints-report-${date}.csv`);
+      link.setAttribute('download', `complaints-report-${date}.html`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -201,26 +412,79 @@ export default function AdminComplaints() {
           <div className="mb-8 flex items-start justify-between">
             <div>
               <h1 className="text-4xl font-bold mb-2 tracking-tight">Complaint Management</h1>
-              <p className="text-gray-400 text-sm">{complaints.length} total complaints</p>
+              <p className="text-gray-400 text-sm">{filteredComplaints.length} complaints {statusFilter !== 'all' ? `(${statusFilter.replace('_', ' ')})` : ''}</p>
             </div>
             <Button
               onClick={handleDownloadReport}
               variant="outline"
               className="border-gray-850 text-gray-400 hover:text-white hover:border-white"
-              disabled={complaints.length === 0}
+              disabled={filteredComplaints.length === 0}
             >
               <Download className="w-4 h-4 mr-2" />
               DOWNLOAD REPORT
             </Button>
           </div>
 
+          {/* Search and Filters */}
+          <div className="mb-6 space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Input
+                type="text"
+                placeholder="Search by title, description, or student name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-transparent border-gray-850 focus:border-white"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant={statusFilter === 'all' ? 'default' : 'outline'}
+                onClick={() => setStatusFilter('all')}
+                size="sm"
+                className={statusFilter === 'all' ? 'bg-white text-black' : 'border-gray-850 text-gray-400'}
+              >
+                ALL ({complaints.length})
+              </Button>
+              <Button
+                variant={statusFilter === 'pending' ? 'default' : 'outline'}
+                onClick={() => setStatusFilter('pending')}
+                size="sm"
+                className={statusFilter === 'pending' ? 'bg-white text-black' : 'border-gray-850 text-gray-400'}
+              >
+                PENDING ({complaints.filter(c => c.status === 'pending').length})
+              </Button>
+              <Button
+                variant={statusFilter === 'in_progress' ? 'default' : 'outline'}
+                onClick={() => setStatusFilter('in_progress')}
+                size="sm"
+                className={statusFilter === 'in_progress' ? 'bg-white text-black' : 'border-gray-850 text-gray-400'}
+              >
+                IN PROGRESS ({complaints.filter(c => c.status === 'in_progress').length})
+              </Button>
+              <Button
+                variant={statusFilter === 'resolved' ? 'default' : 'outline'}
+                onClick={() => setStatusFilter('resolved')}
+                size="sm"
+                className={statusFilter === 'resolved' ? 'bg-white text-black' : 'border-gray-850 text-gray-400'}
+              >
+                RESOLVED ({complaints.filter(c => c.status === 'resolved').length})
+              </Button>
+            </div>
+          </div>
+
           <div className="space-y-4">
-            {complaints.length === 0 ? (
+            {filteredComplaints.length === 0 ? (
               <div className="border border-gray-850 p-12 text-center">
-                <p className="text-gray-500">No complaints submitted yet</p>
+                <p className="text-gray-500">
+                  {searchQuery || statusFilter !== 'all' 
+                    ? 'No complaints found matching your filters' 
+                    : 'No complaints submitted yet'}
+                </p>
               </div>
             ) : (
-              complaints.map((complaint) => (
+              filteredComplaints.map((complaint) => (
                 <div
                   key={complaint.id}
                   className="border border-gray-850 p-6 hover:border-gray-700 transition-colors"
