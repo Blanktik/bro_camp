@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -18,11 +19,7 @@ const Index = () => {
   }, [user, userRole, loading, navigate]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center animate-fade-in">
-        <div className="w-8 h-8 border border-white border-t-transparent animate-spin" />
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
