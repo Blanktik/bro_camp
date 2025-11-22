@@ -24,7 +24,7 @@ interface Complaint {
 }
 
 const quickMacros = [
-  { label: 'NOTED', icon: Bell, response: 'Acknowledged. We will look into this matter.', status: 'resolved' },
+  { label: 'NOTED', icon: Bell, response: 'We are working on this. Will update you soon.', status: 'in_progress' },
   { label: 'HMMM', icon: Eye, response: 'Investigating this issue. Will update you soon.', status: 'in_progress' },
   { label: 'DONE', icon: CheckCircle2, response: 'Issue has been resolved. Thank you for bringing this to our attention.', status: 'resolved' },
 ];
