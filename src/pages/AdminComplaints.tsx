@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ArrowLeft, UserX, Bell, Eye, CheckCircle2, Download } from 'lucide-react';
+import { ArrowLeft, UserX, Bell, Eye, CheckCircle2, Download, ArrowUpCircle, HelpCircle, Copy } from 'lucide-react';
 
 interface Complaint {
   id: string;
@@ -26,6 +26,9 @@ interface Complaint {
 const quickMacros = [
   { label: 'NOTED', icon: Bell, response: 'We are working on this. Will update you soon.', status: 'in_progress' },
   { label: 'HMMM', icon: Eye, response: 'Investigating this issue. Will update you soon.', status: 'in_progress' },
+  { label: 'NEED INFO', icon: HelpCircle, response: 'We need more information to address this. Please provide additional details.', status: 'in_progress' },
+  { label: 'ESCALATED', icon: ArrowUpCircle, response: 'This has been escalated to senior management for review.', status: 'in_progress' },
+  { label: 'DUPLICATE', icon: Copy, response: 'This is a duplicate of an existing complaint. We are already working on it.', status: 'resolved' },
   { label: 'DONE', icon: CheckCircle2, response: 'Issue has been resolved. Thank you for bringing this to our attention.', status: 'resolved' },
 ];
 
