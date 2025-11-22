@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film, Check } from 'lucide-react';
+import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film } from 'lucide-react';
 
 interface Complaint {
   id: string;
@@ -336,14 +336,14 @@ export default function StudentComplaints() {
                             })}
                           </p>
                         </div>
-                        <div className="flex items-center gap-0.5">
+                        <div className="flex items-center gap-1">
                           {complaint.viewed_at ? (
                             <>
-                              <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                              <Check className="w-3 h-3 text-white -ml-2" strokeWidth={3} />
+                              <div className="w-2 h-2 bg-white" />
+                              <div className="w-2 h-2 bg-white" />
                             </>
                           ) : (
-                            <Check className="w-3 h-3 text-gray-600" strokeWidth={3} />
+                            <div className="w-2 h-2 bg-gray-600" />
                           )}
                         </div>
                       </div>
