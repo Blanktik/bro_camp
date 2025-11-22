@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { ArrowLeft, UserX, Bell, CheckCircle2, Download, ArrowUpCircle, HelpCircle, Copy, Volume2 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VoicePlayer } from '@/components/VoicePlayer';
 
 interface Complaint {
@@ -215,23 +214,7 @@ export default function AdminComplaints() {
             </Button>
           </div>
 
-          <Tabs defaultValue="complaints" className="space-y-4">
-            <TabsList className="bg-transparent border border-gray-850 p-0 h-auto">
-              <TabsTrigger 
-                value="complaints" 
-                className="data-[state=active]:bg-white data-[state=active]:text-black px-6 py-2"
-              >
-                COMPLAINTS
-              </TabsTrigger>
-              <TabsTrigger 
-                value="voice-notes" 
-                className="data-[state=active]:bg-white data-[state=active]:text-black px-6 py-2"
-              >
-                VOICE NOTES
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="complaints" className="space-y-4">
+          <div className="space-y-4">
             {complaints.length === 0 ? (
               <div className="border border-gray-850 p-12 text-center">
                 <p className="text-gray-500">No complaints submitted yet</p>
@@ -468,15 +451,7 @@ export default function AdminComplaints() {
                 </div>
               ))
             )}
-            </TabsContent>
-
-            <TabsContent value="voice-notes" className="space-y-4">
-              <div className="border border-gray-850 p-12 text-center">
-                <p className="text-gray-500">Voice notes feature coming soon...</p>
-                <p className="text-xs text-gray-600 mt-2">Missed calls will be converted to voice notes here</p>
-              </div>
-            </TabsContent>
-          </Tabs>
+          </div>
         </div>
       </main>
     </div>
