@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -50,6 +51,10 @@ export default function Auth() {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 animate-fade-in">
