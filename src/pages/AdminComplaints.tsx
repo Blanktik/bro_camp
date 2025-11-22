@@ -36,6 +36,7 @@ export default function AdminComplaints() {
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   const [response, setResponse] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<'in_progress' | 'resolved'>('resolved');
+  const [editingInProgress, setEditingInProgress] = useState<string | null>(null);
 
   useEffect(() => {
     fetchComplaints();
@@ -371,12 +372,50 @@ export default function AdminComplaints() {
 
               {complaint.status === 'in_progress' && (
                 <div className="pt-4 border-t border-gray-850">
-                  <Button
-                    onClick={() => handleQuickMacro(complaint.id, complaint.admin_response || '', 'resolved')}
-                    className="bg-white text-black hover:bg-gray-200 text-xs h-8"
-                  >
-                    MARK AS RESOLVED
-                  </Button>
+                  {editingInProgress === complaint.id ? (
+                    <div className="space-y-3">
+                      <Textarea
+                        value={response}
+                        onChange={(e) => setResponse(e.target.value)}
+                        placeholder="Update response or write a new one..."
+                        className="bg-transparent border-gray-850 focus:border-white resize-none"
+                        rows={4}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => {
+                            handleQuickMacro(complaint.id, response || complaint.admin_response || '', 'resolved');
+                            setEditingInProgress(null);
+                            setResponse('');
+                          }}
+                          className="bg-white text-black hover:bg-gray-200 text-xs h-8"
+                          disabled={!response.trim() && !complaint.admin_response}
+                        >
+                          MARK AS RESOLVED
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setEditingInProgress(null);
+                            setResponse('');
+                          }}
+                          variant="outline"
+                          className="border-gray-850 text-gray-400 hover:text-white hover:border-white text-xs h-8"
+                        >
+                          CANCEL
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        setEditingInProgress(complaint.id);
+                        setResponse(complaint.admin_response || '');
+                      }}
+                      className="bg-white text-black hover:bg-gray-200 text-xs h-8"
+                    >
+                      MARK AS RESOLVED
+                    </Button>
+                  )}
                 </div>
               )}
 
