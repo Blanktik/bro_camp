@@ -4,8 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ArrowLeft, UserX, ThumbsUp, Eye, CheckCircle2, Download } from 'lucide-react';
+import { ArrowLeft, UserX, Bell, Eye, CheckCircle2, Download } from 'lucide-react';
 
 interface Complaint {
   id: string;
@@ -22,9 +24,9 @@ interface Complaint {
 }
 
 const quickMacros = [
-  { label: 'OK', icon: ThumbsUp, response: 'Acknowledged. We will look into this matter.' },
-  { label: 'HMMM', icon: Eye, response: 'Investigating this issue. Will update you soon.' },
-  { label: 'DONE', icon: CheckCircle2, response: 'Issue has been resolved. Thank you for bringing this to our attention.' },
+  { label: 'NOTED', icon: Bell, response: 'Acknowledged. We will look into this matter.', status: 'resolved' },
+  { label: 'HMMM', icon: Eye, response: 'Investigating this issue. Will update you soon.', status: 'in_progress' },
+  { label: 'DONE', icon: CheckCircle2, response: 'Issue has been resolved. Thank you for bringing this to our attention.', status: 'resolved' },
 ];
 
 export default function AdminComplaints() {
@@ -33,6 +35,7 @@ export default function AdminComplaints() {
   const [loading, setLoading] = useState(true);
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   const [response, setResponse] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<'in_progress' | 'resolved'>('resolved');
 
   useEffect(() => {
     fetchComplaints();
@@ -86,13 +89,13 @@ export default function AdminComplaints() {
     }
   };
 
-  const handleQuickMacro = async (complaintId: string, macroResponse: string) => {
+  const handleQuickMacro = async (complaintId: string, macroResponse: string, status: string) => {
     try {
       const { error } = await supabase
         .from('complaints')
         .update({
           admin_response: macroResponse,
-          status: 'resolved',
+          status: status,
         })
         .eq('id', complaintId);
 
@@ -111,7 +114,7 @@ export default function AdminComplaints() {
         .from('complaints')
         .update({
           admin_response: response,
-          status: 'resolved',
+          status: selectedStatus,
         })
         .eq('id', complaintId);
 
@@ -120,6 +123,7 @@ export default function AdminComplaints() {
       toast.success('Response submitted');
       setSelectedComplaint(null);
       setResponse('');
+      setSelectedStatus('resolved');
       fetchComplaints();
     } catch (error: any) {
       toast.error(error.message);
@@ -291,7 +295,7 @@ export default function AdminComplaints() {
                             key={macro.label}
                             size="sm"
                             variant="outline"
-                            onClick={() => handleQuickMacro(complaint.id, macro.response)}
+                            onClick={() => handleQuickMacro(complaint.id, macro.response, macro.status)}
                             className="border-gray-850 text-gray-400 hover:text-white hover:border-white h-7 px-3 text-xs"
                           >
                             <macro.icon className="w-3 h-3 mr-1" />
@@ -309,24 +313,48 @@ export default function AdminComplaints() {
                             className="bg-transparent border-gray-850 focus:border-white resize-none"
                             rows={4}
                           />
-                          <div className="flex gap-2">
-                            <Button
-                              onClick={() => handleRespond(complaint.id)}
-                              className="bg-white text-black hover:bg-gray-200 text-xs h-8"
-                              disabled={!response.trim()}
-                            >
-                              SUBMIT RESPONSE
-                            </Button>
-                            <Button
-                              onClick={() => {
-                                setSelectedComplaint(null);
-                                setResponse('');
-                              }}
-                              variant="outline"
-                              className="border-gray-850 text-gray-400 hover:text-white hover:border-white text-xs h-8"
-                            >
-                              CANCEL
-                            </Button>
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-2 tracking-wider">SET STATUS:</p>
+                              <RadioGroup
+                                value={selectedStatus}
+                                onValueChange={(value) => setSelectedStatus(value as 'in_progress' | 'resolved')}
+                                className="flex gap-4"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="in_progress" id="in_progress" className="border-gray-850" />
+                                  <Label htmlFor="in_progress" className="text-sm text-gray-400 cursor-pointer">
+                                    IN PROGRESS
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="resolved" id="resolved" className="border-gray-850" />
+                                  <Label htmlFor="resolved" className="text-sm text-gray-400 cursor-pointer">
+                                    RESOLVED
+                                  </Label>
+                                </div>
+                              </RadioGroup>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => handleRespond(complaint.id)}
+                                className="bg-white text-black hover:bg-gray-200 text-xs h-8"
+                                disabled={!response.trim()}
+                              >
+                                SUBMIT RESPONSE
+                              </Button>
+                              <Button
+                                onClick={() => {
+                                  setSelectedComplaint(null);
+                                  setResponse('');
+                                  setSelectedStatus('resolved');
+                                }}
+                                variant="outline"
+                                className="border-gray-850 text-gray-400 hover:text-white hover:border-white text-xs h-8"
+                              >
+                                CANCEL
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       ) : (
