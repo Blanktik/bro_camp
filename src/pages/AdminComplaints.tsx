@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { ArrowLeft, UserX, ThumbsUp, Eye, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, UserX, ThumbsUp, Eye, CheckCircle2, Download } from 'lucide-react';
 
 interface Complaint {
   id: string;
@@ -111,6 +111,45 @@ export default function AdminComplaints() {
     }
   };
 
+  const handleDownloadReport = () => {
+    try {
+      // Prepare CSV content
+      const headers = ['Date', 'Title', 'Description', 'Status', 'Submitted By', 'Admin Response', 'Anonymous'];
+      const csvRows = [headers.join(',')];
+
+      complaints.forEach(complaint => {
+        const row = [
+          new Date(complaint.created_at).toLocaleDateString('en-US'),
+          `"${complaint.title.replace(/"/g, '""')}"`,
+          `"${complaint.description.replace(/"/g, '""')}"`,
+          complaint.status,
+          complaint.is_anonymous ? 'Anonymous' : `"${complaint.profiles?.full_name || 'Unknown User'}"`,
+          complaint.admin_response ? `"${complaint.admin_response.replace(/"/g, '""')}"` : 'No response',
+          complaint.is_anonymous ? 'Yes' : 'No',
+        ];
+        csvRows.push(row.join(','));
+      });
+
+      // Create and download file
+      const csvContent = csvRows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      const date = new Date().toISOString().split('T')[0];
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `complaints-report-${date}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success('Report downloaded successfully');
+    } catch (error: any) {
+      toast.error('Failed to download report');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -134,9 +173,20 @@ export default function AdminComplaints() {
 
       <main className="p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2 tracking-tight">Complaint Management</h1>
-            <p className="text-gray-400 text-sm">{complaints.length} total complaints</p>
+          <div className="mb-8 flex items-start justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-2 tracking-tight">Complaint Management</h1>
+              <p className="text-gray-400 text-sm">{complaints.length} total complaints</p>
+            </div>
+            <Button
+              onClick={handleDownloadReport}
+              variant="outline"
+              className="border-gray-850 text-gray-400 hover:text-white hover:border-white"
+              disabled={complaints.length === 0}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              DOWNLOAD REPORT
+            </Button>
           </div>
 
           <div className="space-y-4">
