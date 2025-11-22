@@ -26,7 +26,6 @@ interface Complaint {
 
 const quickMacros = [
   { label: 'NOTED', icon: Bell, response: 'We are working on this. Will update you soon.', status: 'in_progress' },
-  { label: 'HMMM', icon: Eye, response: 'Investigating this issue. Will update you soon.', status: 'in_progress' },
   { label: 'NEED INFO', icon: HelpCircle, response: 'We need more information to address this. Please provide additional details.', status: 'in_progress' },
   { label: 'ESCALATED', icon: ArrowUpCircle, response: 'This has been escalated to senior management for review.', status: 'in_progress' },
   { label: 'DUPLICATE', icon: Copy, response: 'This is a duplicate of an existing complaint. We are already working on it.', status: 'resolved' },
