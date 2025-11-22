@@ -18,6 +18,7 @@ interface Complaint {
   profiles: { full_name: string } | null;
   media_urls: string[] | null;
   viewed_at: string | null;
+  edited_at: string | null;
 }
 
 const quickMacros = [
@@ -228,6 +229,9 @@ export default function AdminComplaints() {
                         >
                           {complaint.status.toUpperCase()}
                         </Badge>
+                        {complaint.edited_at && (
+                          <span className="text-xs text-gray-500 tracking-wider">EDITED</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-3 text-sm text-gray-400">
                         <span className="flex items-center gap-1">
