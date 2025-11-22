@@ -8,12 +8,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { ArrowLeft, UserX, Bell, Eye, CheckCircle2, Download, ArrowUpCircle, HelpCircle, Copy, BellOff } from 'lucide-react';
-import { IncomingCallsPanel } from '@/components/IncomingCallsPanel';
-import { useAdminStatus } from '@/hooks/useAdminStatus';
+import { ArrowLeft, UserX, Bell, CheckCircle2, Download, ArrowUpCircle, HelpCircle, Copy, Volume2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CallMode } from '@/components/CallMode';
-import { useAuth } from '@/hooks/useAuth';
+import { VoicePlayer } from '@/components/VoicePlayer';
 
 interface Complaint {
   id: string;
@@ -27,6 +24,7 @@ interface Complaint {
   media_urls: string[] | null;
   viewed_at: string | null;
   edited_at: string | null;
+  voice_note_url: string | null;
 }
 
 const quickMacros = [
@@ -39,40 +37,12 @@ const quickMacros = [
 
 export default function AdminComplaints() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { isDnd, toggleDnd } = useAdminStatus();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   const [response, setResponse] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<'in_progress' | 'resolved'>('resolved');
   const [editingInProgress, setEditingInProgress] = useState<string | null>(null);
-  const [activeCall, setActiveCall] = useState<{
-    id: string;
-    student_name: string;
-    student_email: string;
-    call_title: string;
-  } | null>(null);
-
-  // Check for active calls
-  useEffect(() => {
-    const checkActiveCall = async () => {
-      if (!user) return;
-      
-      const { data } = await supabase
-        .from('calls')
-        .select('*')
-        .eq('attended_by', user.id)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (data) {
-        setActiveCall(data);
-      }
-    };
-
-    checkActiveCall();
-  }, [user]);
 
   useEffect(() => {
     fetchComplaints();
@@ -214,23 +184,8 @@ export default function AdminComplaints() {
     );
   }
 
-  // Show call mode if admin is in active call
-  if (activeCall) {
-    return (
-      <CallMode
-        callId={activeCall.id}
-        studentName={activeCall.student_name}
-        studentEmail={activeCall.student_email}
-        callTitle={activeCall.call_title}
-        onEndCall={() => setActiveCall(null)}
-      />
-    );
-  }
-
   return (
     <div className="min-h-screen">
-      {!isDnd && <IncomingCallsPanel />}
-      
       <header className="border-b border-gray-850 p-4 flex justify-between items-center">
         <Button
           onClick={() => navigate('/admin')}
@@ -239,15 +194,6 @@ export default function AdminComplaints() {
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           BACK
-        </Button>
-        
-        <Button
-          onClick={toggleDnd}
-          variant={isDnd ? "default" : "outline"}
-          className={isDnd ? "bg-white text-black hover:bg-gray-200" : "border-gray-850 text-gray-400 hover:text-white hover:border-white"}
-        >
-          <BellOff className="w-4 h-4 mr-2" />
-          {isDnd ? 'DND ON' : 'DND OFF'}
         </Button>
       </header>
 
@@ -360,6 +306,16 @@ export default function AdminComplaints() {
                           )}
                         </a>
                       ))}
+                    </div>
+                  )}
+
+                  {complaint.voice_note_url && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Volume2 className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium">Voice Note</span>
+                      </div>
+                      <VoicePlayer audioUrl={complaint.voice_note_url} />
                     </div>
                   )}
 

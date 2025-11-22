@@ -9,12 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film, Check, Info, Edit2, Users } from 'lucide-react';
+import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film, Check, Info, Edit2, Mic } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
-import { CallAdminButton } from '@/components/CallAdminButton';
-import { useAdminStatus } from '@/hooks/useAdminStatus';
-import { StudentCallStatus } from '@/components/StudentCallStatus';
+import { VoiceRecorder } from '@/components/VoiceRecorder';
 
 interface Complaint {
   id: string;
@@ -27,12 +25,12 @@ interface Complaint {
   viewed_at: string | null;
   edited_at: string | null;
   is_anonymous: boolean;
+  voice_note_url: string | null;
 }
 
 export default function StudentComplaints() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { onlineAdminsCount } = useAdminStatus();
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -43,6 +41,8 @@ export default function StudentComplaints() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [editingComplaint, setEditingComplaint] = useState<string | null>(null);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [voiceNoteBlob, setVoiceNoteBlob] = useState<Blob | null>(null);
 
   useEffect(() => {
     fetchComplaints();
@@ -121,6 +121,29 @@ export default function StudentComplaints() {
     return uploadedUrls;
   };
 
+  const uploadVoiceNote = async (): Promise<string | null> => {
+    if (!voiceNoteBlob) return null;
+
+    try {
+      const fileName = `${user!.id}/${Date.now()}-voice-note.webm`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('complaint-media')
+        .upload(fileName, voiceNoteBlob);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('complaint-media')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading voice note:', error);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -128,6 +151,7 @@ export default function StudentComplaints() {
     setLoading(true);
     try {
       const mediaUrls = await uploadMedia();
+      const voiceNoteUrl = await uploadVoiceNote();
 
       if (editingComplaint) {
         // Update existing complaint
@@ -137,6 +161,7 @@ export default function StudentComplaints() {
             title,
             description,
             media_urls: mediaUrls.length > 0 ? mediaUrls : null,
+            voice_note_url: voiceNoteUrl,
             edited_at: new Date().toISOString(),
           })
           .eq('id', editingComplaint);
@@ -152,6 +177,7 @@ export default function StudentComplaints() {
           is_anonymous: isAnonymous,
           status: 'pending',
           media_urls: mediaUrls.length > 0 ? mediaUrls : null,
+          voice_note_url: voiceNoteUrl,
         });
 
         if (error) throw error;
@@ -162,6 +188,8 @@ export default function StudentComplaints() {
       setDescription('');
       setIsAnonymous(false);
       setSelectedFiles([]);
+      setVoiceNoteBlob(null);
+      setShowVoiceRecorder(false);
       setShowForm(false);
       setEditingComplaint(null);
       fetchComplaints();
@@ -189,6 +217,8 @@ export default function StudentComplaints() {
     setDescription('');
     setIsAnonymous(false);
     setSelectedFiles([]);
+    setVoiceNoteBlob(null);
+    setShowVoiceRecorder(false);
     setShowForm(false);
     setEditingComplaint(null);
   };
@@ -206,8 +236,6 @@ export default function StudentComplaints() {
 
   return (
     <div className="min-h-screen">
-      <StudentCallStatus />
-      
       <header className="border-b border-gray-850 p-4 flex justify-between items-center">
         <Button
           onClick={() => navigate('/student')}
@@ -218,20 +246,13 @@ export default function StudentComplaints() {
           BACK
         </Button>
         {!showForm && (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1 border border-gray-850 text-xs">
-              <Users className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-400">{onlineAdminsCount} ADMINS ONLINE</span>
-            </div>
-            <CallAdminButton />
-            <Button
-              onClick={() => setShowForm(true)}
-              className="bg-white text-black hover:bg-gray-200"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              NEW COMPLAINT
-            </Button>
-          </div>
+          <Button
+            onClick={() => setShowForm(true)}
+            className="bg-white text-black hover:bg-gray-200"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            NEW COMPLAINT
+          </Button>
         )}
       </header>
 
@@ -340,6 +361,52 @@ export default function StudentComplaints() {
                           </button>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs tracking-wider text-gray-400">
+                    VOICE NOTE (OPTIONAL)
+                  </Label>
+                  {!showVoiceRecorder && !voiceNoteBlob && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowVoiceRecorder(true)}
+                      className="w-full border-gray-850 text-gray-400 hover:text-white hover:border-white"
+                    >
+                      <Mic className="w-4 h-4 mr-2" />
+                      ADD VOICE NOTE
+                    </Button>
+                  )}
+                  {showVoiceRecorder && (
+                    <VoiceRecorder
+                      onRecordingComplete={(blob) => {
+                        setVoiceNoteBlob(blob);
+                        setShowVoiceRecorder(false);
+                      }}
+                      onRecordingCancel={() => setShowVoiceRecorder(false)}
+                    />
+                  )}
+                  {voiceNoteBlob && !showVoiceRecorder && (
+                    <div className="border border-gray-850 p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Mic className="w-4 h-4 text-primary" />
+                        <span className="text-sm">Voice note recorded</span>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setVoiceNoteBlob(null);
+                          setShowVoiceRecorder(false);
+                        }}
+                        className="text-gray-500 hover:text-white"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
                     </div>
                   )}
                 </div>
