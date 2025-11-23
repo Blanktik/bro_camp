@@ -19,6 +19,12 @@ export type Database = {
           admin_id: string | null
           admin_response: string | null
           admin_voice_note_url: string | null
+          appeal_response: string | null
+          appeal_reviewed_at: string | null
+          appeal_reviewed_by: string | null
+          appeal_status: string | null
+          appeal_submitted_at: string | null
+          appeal_text: string | null
           created_at: string
           description: string
           edited_at: string | null
@@ -44,6 +50,12 @@ export type Database = {
           admin_id?: string | null
           admin_response?: string | null
           admin_voice_note_url?: string | null
+          appeal_response?: string | null
+          appeal_reviewed_at?: string | null
+          appeal_reviewed_by?: string | null
+          appeal_status?: string | null
+          appeal_submitted_at?: string | null
+          appeal_text?: string | null
           created_at?: string
           description: string
           edited_at?: string | null
@@ -69,6 +81,12 @@ export type Database = {
           admin_id?: string | null
           admin_response?: string | null
           admin_voice_note_url?: string | null
+          appeal_response?: string | null
+          appeal_reviewed_at?: string | null
+          appeal_reviewed_by?: string | null
+          appeal_status?: string | null
+          appeal_submitted_at?: string | null
+          appeal_text?: string | null
           created_at?: string
           description?: string
           edited_at?: string | null
