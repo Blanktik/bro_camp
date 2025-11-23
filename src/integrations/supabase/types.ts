@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           admin_id: string | null
           admin_response: string | null
+          admin_voice_note_url: string | null
           created_at: string
           description: string
           edited_at: string | null
@@ -36,6 +37,7 @@ export type Database = {
         Insert: {
           admin_id?: string | null
           admin_response?: string | null
+          admin_voice_note_url?: string | null
           created_at?: string
           description: string
           edited_at?: string | null
@@ -54,6 +56,7 @@ export type Database = {
         Update: {
           admin_id?: string | null
           admin_response?: string | null
+          admin_voice_note_url?: string | null
           created_at?: string
           description?: string
           edited_at?: string | null
