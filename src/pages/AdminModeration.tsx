@@ -40,6 +40,9 @@ interface Complaint {
   appeal_submitted_at: string | null;
   appeal_status: string | null;
   appeal_response: string | null;
+  deleted: boolean;
+  deleted_at: string | null;
+  deleted_by: string | null;
 }
 
 export default function AdminModeration() {
@@ -49,7 +52,7 @@ export default function AdminModeration() {
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   const [flagReason, setFlagReason] = useState('');
   const [moderationNotes, setModerationNotes] = useState('');
-  const [viewFilter, setViewFilter] = useState<'all' | 'flagged'>('flagged');
+  const [viewFilter, setViewFilter] = useState<'all' | 'flagged' | 'archive'>('flagged');
   const [appealResponse, setAppealResponse] = useState('');
   const [respondingToAppeal, setRespondingToAppeal] = useState<string | null>(null);
 
@@ -75,14 +78,24 @@ export default function AdminModeration() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [viewFilter]);
 
   const fetchComplaints = async () => {
     try {
       setLoading(true);
-      const { data: complaintsData, error } = await supabase
+      
+      // Fetch based on filter - archive shows deleted, others show non-deleted
+      const query = supabase
         .from('complaints')
-        .select('*')
+        .select('*');
+      
+      if (viewFilter === 'archive') {
+        query.eq('deleted', true);
+      } else {
+        query.eq('deleted', false);
+      }
+      
+      const { data: complaintsData, error } = await query
         .order('flagged', { ascending: false })
         .order('created_at', { ascending: false });
 
@@ -172,13 +185,19 @@ export default function AdminModeration() {
   const handleModerationAction = async (complaintId: string, action: 'approve' | 'delete') => {
     try {
       if (action === 'delete') {
+        const { data: { user } } = await supabase.auth.getUser();
+        
         const { error } = await supabase
           .from('complaints')
-          .delete()
+          .update({
+            deleted: true,
+            deleted_at: new Date().toISOString(),
+            deleted_by: user?.id,
+          })
           .eq('id', complaintId);
 
         if (error) throw error;
-        toast.success('Complaint deleted');
+        toast.success('Complaint moved to archive');
       } else {
         const { error } = await supabase
           .from('complaints')
@@ -198,6 +217,40 @@ export default function AdminModeration() {
       fetchComplaints();
     } catch (error: any) {
       toast.error(`Failed to ${action} complaint`);
+    }
+  };
+
+  const handleRestore = async (complaintId: string) => {
+    try {
+      const { error } = await supabase
+        .from('complaints')
+        .update({
+          deleted: false,
+          deleted_at: null,
+          deleted_by: null,
+        })
+        .eq('id', complaintId);
+
+      if (error) throw error;
+      toast.success('Complaint restored');
+      fetchComplaints();
+    } catch (error: any) {
+      toast.error('Failed to restore complaint');
+    }
+  };
+
+  const handlePermanentDelete = async (complaintId: string) => {
+    try {
+      const { error } = await supabase
+        .from('complaints')
+        .delete()
+        .eq('id', complaintId);
+
+      if (error) throw error;
+      toast.success('Complaint permanently deleted');
+      fetchComplaints();
+    } catch (error: any) {
+      toast.error('Failed to delete complaint');
     }
   };
 
@@ -235,9 +288,11 @@ export default function AdminModeration() {
     }
   };
 
-  const flaggedCount = complaints.filter(c => c.flagged).length;
+  const flaggedCount = complaints.filter(c => c.flagged && !c.deleted).length;
   const filteredComplaints = viewFilter === 'flagged' 
     ? complaints.filter(c => c.flagged)
+    : viewFilter === 'archive'
+    ? complaints
     : complaints;
 
   if (loading) {
@@ -326,7 +381,15 @@ export default function AdminModeration() {
               className="border-gray-850"
             >
               <Eye className="w-4 h-4 mr-2" />
-              ALL COMPLAINTS ({complaints.length})
+              ALL COMPLAINTS
+            </Button>
+            <Button
+              onClick={() => setViewFilter('archive')}
+              variant={viewFilter === 'archive' ? 'default' : 'outline'}
+              className="border-gray-850"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              ARCHIVE ({complaints.length})
             </Button>
           </div>
 
@@ -335,11 +398,14 @@ export default function AdminModeration() {
             <div className="border border-gray-850 p-12 text-center">
               <CheckCircle className="w-12 h-12 text-gray-600 mx-auto mb-4" />
               <p className="text-gray-500 mb-2">
-                {viewFilter === 'flagged' ? 'No flagged complaints' : 'No complaints found'}
+                {viewFilter === 'flagged' ? 'No flagged complaints' : 
+                 viewFilter === 'archive' ? 'No deleted complaints' : 'No complaints found'}
               </p>
               <p className="text-xs text-gray-600">
                 {viewFilter === 'flagged' 
-                  ? 'All content has been reviewed' 
+                  ? 'All content has been reviewed'
+                  : viewFilter === 'archive'
+                  ? 'Archive is empty'
                   : 'No complaints have been submitted yet'}
               </p>
             </div>
@@ -494,46 +560,32 @@ export default function AdminModeration() {
                   </div>
 
                   <div className="flex gap-2">
-                    {complaint.flagged ? (
+                    {viewFilter === 'archive' ? (
                       <>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
-                              variant="outline"
                               size="sm"
-                              className="border-gray-700"
-                              onClick={() => setSelectedComplaint(complaint)}
+                              className="bg-green-700 text-white hover:bg-green-600"
                             >
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              APPROVE
+                              <RefreshCw className="w-3 h-3 mr-1" />
+                              RESTORE
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-black border-gray-850">
+                          <AlertDialogContent className="bg-black border-white">
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Approve Complaint</AlertDialogTitle>
+                              <AlertDialogTitle>Restore Complaint</AlertDialogTitle>
                               <AlertDialogDescription className="text-gray-400">
-                                This will remove the flag and mark the complaint as reviewed.
+                                This will restore the complaint from the archive.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
-                            <div className="my-4">
-                              <Label htmlFor="notes" className="text-sm text-gray-400">
-                                Moderation Notes (Optional)
-                              </Label>
-                              <Textarea
-                                id="notes"
-                                value={moderationNotes}
-                                onChange={(e) => setModerationNotes(e.target.value)}
-                                placeholder="Add any notes about this decision..."
-                                className="mt-2 bg-gray-950 border-gray-850"
-                              />
-                            </div>
                             <AlertDialogFooter>
-                              <AlertDialogCancel className="border-gray-850">Cancel</AlertDialogCancel>
+                              <AlertDialogCancel className="border-gray-700">CANCEL</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleModerationAction(complaint.id, 'approve')}
+                                onClick={() => handleRestore(complaint.id)}
                                 className="bg-white text-black hover:bg-gray-200"
                               >
-                                Approve
+                                RESTORE
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -542,91 +594,169 @@ export default function AdminModeration() {
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
-                              variant="outline"
                               size="sm"
-                              className="border-gray-700"
+                              variant="destructive"
                             >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              DELETE
+                              <X className="w-3 h-3 mr-1" />
+                              PERMANENTLY DELETE
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-black border-gray-850">
+                          <AlertDialogContent className="bg-black border-white">
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Complaint</AlertDialogTitle>
+                              <AlertDialogTitle>Permanently Delete</AlertDialogTitle>
                               <AlertDialogDescription className="text-gray-400">
-                                This will permanently delete this complaint. This action cannot be undone.
+                                This will permanently remove this complaint. This action CANNOT be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel className="border-gray-850">Cancel</AlertDialogCancel>
+                              <AlertDialogCancel className="border-gray-700">CANCEL</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleModerationAction(complaint.id, 'delete')}
+                                onClick={() => handlePermanentDelete(complaint.id)}
                                 className="bg-red-600 text-white hover:bg-red-700"
                               >
-                                Delete
+                                DELETE FOREVER
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
-
-                        <Button
-                          onClick={() => handleUnflagComplaint(complaint.id)}
-                          variant="outline"
-                          size="sm"
-                          className="border-gray-700"
-                        >
-                          UNFLAG
-                        </Button>
                       </>
                     ) : (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-gray-700"
-                            onClick={() => setSelectedComplaint(complaint)}
-                          >
-                            <Flag className="w-4 h-4 mr-2" />
-                            FLAG FOR REVIEW
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-black border-gray-850">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Flag Complaint</AlertDialogTitle>
-                            <AlertDialogDescription className="text-gray-400">
-                              Mark this complaint for moderation review. Provide a reason below.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <div className="my-4">
-                            <Label htmlFor="reason" className="text-sm text-gray-400">
-                              Flag Reason *
-                            </Label>
-                            <Textarea
-                              id="reason"
-                              value={flagReason}
-                              onChange={(e) => setFlagReason(e.target.value)}
-                              placeholder="Why is this content being flagged? (e.g., inappropriate language, spam, harassment)"
-                              className="mt-2 bg-gray-950 border-gray-850"
-                              required
-                            />
-                          </div>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel 
-                              className="border-gray-850"
-                              onClick={() => setFlagReason('')}
+                      <>
+                        {complaint.flagged ? (
+                          <>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-gray-700"
+                                  onClick={() => setSelectedComplaint(complaint)}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  APPROVE
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="bg-black border-gray-850">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Approve Complaint</AlertDialogTitle>
+                                  <AlertDialogDescription className="text-gray-400">
+                                    This will remove the flag and mark the complaint as reviewed.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <div className="my-4">
+                                  <Label htmlFor="notes" className="text-sm text-gray-400">
+                                    Moderation Notes (Optional)
+                                  </Label>
+                                  <Textarea
+                                    id="notes"
+                                    value={moderationNotes}
+                                    onChange={(e) => setModerationNotes(e.target.value)}
+                                    placeholder="Add any notes about this decision..."
+                                    className="mt-2 bg-gray-950 border-gray-850"
+                                  />
+                                </div>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className="border-gray-850">Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleModerationAction(complaint.id, 'approve')}
+                                    className="bg-white text-black hover:bg-gray-200"
+                                  >
+                                    Approve
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-gray-700"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  DELETE
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="bg-black border-gray-850">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Complaint</AlertDialogTitle>
+                                  <AlertDialogDescription className="text-gray-400">
+                                    This will move the complaint to the archive for review before permanent deletion.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className="border-gray-850">Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleModerationAction(complaint.id, 'delete')}
+                                    className="bg-red-600 text-white hover:bg-red-700"
+                                  >
+                                    Move to Archive
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+
+                            <Button
+                              onClick={() => handleUnflagComplaint(complaint.id)}
+                              variant="outline"
+                              size="sm"
+                              className="border-gray-700"
                             >
-                              Cancel
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => complaint && handleFlagComplaint(complaint)}
-                              className="bg-white text-black hover:bg-gray-200"
-                            >
-                              Flag Complaint
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                              UNFLAG
+                            </Button>
+                          </>
+                        ) : (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-gray-700"
+                                onClick={() => setSelectedComplaint(complaint)}
+                              >
+                                <Flag className="w-4 h-4 mr-2" />
+                                FLAG FOR REVIEW
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="bg-black border-gray-850">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Flag Complaint</AlertDialogTitle>
+                                <AlertDialogDescription className="text-gray-400">
+                                  Mark this complaint for moderation review. Provide a reason below.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <div className="my-4">
+                                <Label htmlFor="reason" className="text-sm text-gray-400">
+                                  Flag Reason *
+                                </Label>
+                                <Textarea
+                                  id="reason"
+                                  value={flagReason}
+                                  onChange={(e) => setFlagReason(e.target.value)}
+                                  placeholder="Why is this content being flagged? (e.g., inappropriate language, spam, harassment)"
+                                  className="mt-2 bg-gray-950 border-gray-850"
+                                  required
+                                />
+                              </div>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel 
+                                  className="border-gray-850"
+                                  onClick={() => setFlagReason('')}
+                                >
+                                  Cancel
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => complaint && handleFlagComplaint(complaint)}
+                                  className="bg-white text-black hover:bg-gray-200"
+                                >
+                                  Flag Complaint
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

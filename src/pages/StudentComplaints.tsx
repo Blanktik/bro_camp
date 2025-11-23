@@ -73,6 +73,7 @@ export default function StudentComplaints() {
         .from('complaints')
         .select('*')
         .eq('user_id', user.id)
+        .eq('deleted', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -243,56 +244,22 @@ export default function StudentComplaints() {
   const handleDelete = async (complaintId: string) => {
     if (!user) return;
 
-    const complaintToDelete = complaints.find(c => c.id === complaintId);
-    if (!complaintToDelete) return;
-
     try {
       const { error } = await supabase
         .from('complaints')
-        .delete()
+        .update({
+          deleted: true,
+          deleted_at: new Date().toISOString(),
+          deleted_by: user.id,
+        })
         .eq('id', complaintId);
 
       if (error) throw error;
-
-      // Store for undo
-      const deletedComplaint = complaintToDelete;
       
       // Remove from list
       setComplaints(prev => prev.filter(c => c.id !== complaintId));
       
-      // Show toast with undo
-      toast.success('Complaint deleted', {
-        action: {
-          label: 'Undo',
-          onClick: async () => {
-            try {
-              const { error: restoreError } = await supabase
-                .from('complaints')
-                .insert({
-                  id: deletedComplaint.id,
-                  user_id: deletedComplaint.user_id || user.id,
-                  title: deletedComplaint.title,
-                  description: deletedComplaint.description,
-                  status: deletedComplaint.status,
-                  is_anonymous: deletedComplaint.is_anonymous,
-                  media_urls: deletedComplaint.media_urls,
-                  voice_note_url: deletedComplaint.voice_note_url,
-                  created_at: deletedComplaint.created_at,
-                  admin_response: deletedComplaint.admin_response,
-                  viewed_at: deletedComplaint.viewed_at,
-                  edited_at: deletedComplaint.edited_at,
-                });
-
-              if (restoreError) throw restoreError;
-              fetchComplaints();
-              toast.success('Complaint restored');
-            } catch (error: any) {
-              toast.error('Failed to restore complaint');
-            }
-          },
-        },
-      });
-      
+      toast.success('Complaint deleted');
       setDeletingComplaint(null);
     } catch (error: any) {
       toast.error(error.message);
