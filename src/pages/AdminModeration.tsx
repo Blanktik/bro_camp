@@ -355,7 +355,7 @@ export default function AdminModeration() {
               <p className="text-xs text-gray-500">{flaggedCount === 0 ? 'No content flagged' : 'Needs review'}</p>
             </div>
 
-            <div className="border border-gray-850 p-6">
+            <div className={`border p-6 ${flaggedCount > 0 ? 'border-white animate-border-glow' : 'border-gray-850'}`}>
               <div className="flex items-center gap-3 mb-4">
                 <AlertTriangle className="w-6 h-6 text-gray-400" />
                 <h3 className="text-sm tracking-wider text-gray-400">PENDING REVIEWS</h3>
