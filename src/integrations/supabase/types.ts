@@ -22,9 +22,15 @@ export type Database = {
           created_at: string
           description: string
           edited_at: string | null
+          flagged: boolean | null
+          flagged_at: string | null
+          flagged_by: string | null
+          flagged_reason: string | null
           id: string
           is_anonymous: boolean
           media_urls: string[] | null
+          moderation_action: string | null
+          moderation_notes: string | null
           resolved_at: string | null
           responded_at: string | null
           status: string | null
@@ -41,9 +47,15 @@ export type Database = {
           created_at?: string
           description: string
           edited_at?: string | null
+          flagged?: boolean | null
+          flagged_at?: string | null
+          flagged_by?: string | null
+          flagged_reason?: string | null
           id?: string
           is_anonymous?: boolean
           media_urls?: string[] | null
+          moderation_action?: string | null
+          moderation_notes?: string | null
           resolved_at?: string | null
           responded_at?: string | null
           status?: string | null
@@ -60,9 +72,15 @@ export type Database = {
           created_at?: string
           description?: string
           edited_at?: string | null
+          flagged?: boolean | null
+          flagged_at?: string | null
+          flagged_by?: string | null
+          flagged_reason?: string | null
           id?: string
           is_anonymous?: boolean
           media_urls?: string[] | null
+          moderation_action?: string | null
+          moderation_notes?: string | null
           resolved_at?: string | null
           responded_at?: string | null
           status?: string | null
