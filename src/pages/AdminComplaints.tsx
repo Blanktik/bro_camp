@@ -27,6 +27,7 @@ interface Complaint {
   voice_note_url: string | null;
   admin_id: string | null;
   responded_at: string | null;
+  resolved_at: string | null;
   admin_profile?: { full_name: string; email: string } | null;
 }
 
@@ -140,14 +141,21 @@ export default function AdminComplaints() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      const updateData: any = {
+        admin_response: macroResponse,
+        status: status,
+        admin_id: user?.id,
+        responded_at: new Date().toISOString(),
+      };
+      
+      // Add resolved_at timestamp if status is resolved
+      if (status === 'resolved') {
+        updateData.resolved_at = new Date().toISOString();
+      }
+      
       const { error } = await supabase
         .from('complaints')
-        .update({
-          admin_response: macroResponse,
-          status: status,
-          admin_id: user?.id,
-          responded_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', complaintId);
 
       if (error) throw error;
@@ -163,14 +171,21 @@ export default function AdminComplaints() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      const updateData: any = {
+        admin_response: response,
+        status: selectedStatus,
+        admin_id: user?.id,
+        responded_at: new Date().toISOString(),
+      };
+      
+      // Add resolved_at timestamp if status is resolved
+      if (selectedStatus === 'resolved') {
+        updateData.resolved_at = new Date().toISOString();
+      }
+      
       const { error } = await supabase
         .from('complaints')
-        .update({
-          admin_response: response,
-          status: selectedStatus,
-          admin_id: user?.id,
-          responded_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', complaintId);
 
       if (error) throw error;

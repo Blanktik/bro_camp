@@ -28,6 +28,8 @@ interface Complaint {
   is_anonymous: boolean;
   voice_note_url: string | null;
   user_id: string | null;
+  responded_at: string | null;
+  resolved_at: string | null;
 }
 
 export default function StudentComplaints() {
@@ -647,7 +649,19 @@ export default function StudentComplaints() {
 
                       {complaint.admin_response && (
                         <div className="border-t border-gray-850 pt-4 mt-4">
-                          <p className="text-xs text-gray-500 mb-2 tracking-wider">ADMIN RESPONSE</p>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs text-gray-500 tracking-wider">ADMIN RESPONSE</p>
+                            {complaint.status === 'resolved' && complaint.resolved_at && (
+                              <p className="text-xs text-gray-500">
+                                Resolved: {format(new Date(complaint.resolved_at), 'MMM d, yyyy h:mm a')}
+                              </p>
+                            )}
+                            {complaint.status === 'in_progress' && complaint.responded_at && (
+                              <p className="text-xs text-gray-500">
+                                In Progress: {format(new Date(complaint.responded_at), 'MMM d, yyyy h:mm a')}
+                              </p>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-300">{complaint.admin_response}</p>
                         </div>
                       )}

@@ -24,6 +24,7 @@ export type Database = {
           id: string
           is_anonymous: boolean
           media_urls: string[] | null
+          resolved_at: string | null
           responded_at: string | null
           status: string | null
           title: string
@@ -41,6 +42,7 @@ export type Database = {
           id?: string
           is_anonymous?: boolean
           media_urls?: string[] | null
+          resolved_at?: string | null
           responded_at?: string | null
           status?: string | null
           title: string
@@ -58,6 +60,7 @@ export type Database = {
           id?: string
           is_anonymous?: boolean
           media_urls?: string[] | null
+          resolved_at?: string | null
           responded_at?: string | null
           status?: string | null
           title?: string
