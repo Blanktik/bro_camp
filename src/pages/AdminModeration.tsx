@@ -55,9 +55,11 @@ export default function AdminModeration() {
   const [viewFilter, setViewFilter] = useState<'all' | 'flagged' | 'archive'>('flagged');
   const [appealResponse, setAppealResponse] = useState('');
   const [respondingToAppeal, setRespondingToAppeal] = useState<string | null>(null);
+  const [archiveCount, setArchiveCount] = useState(0);
 
   useEffect(() => {
     fetchComplaints();
+    fetchArchiveCount();
     
     // Set up realtime subscription for complaints
     const channel = supabase
@@ -71,6 +73,7 @@ export default function AdminModeration() {
         },
         () => {
           fetchComplaints();
+          fetchArchiveCount();
         }
       )
       .subscribe();
@@ -79,6 +82,20 @@ export default function AdminModeration() {
       supabase.removeChannel(channel);
     };
   }, [viewFilter]);
+
+  const fetchArchiveCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('complaints')
+        .select('*', { count: 'exact', head: true })
+        .eq('deleted', true);
+
+      if (error) throw error;
+      setArchiveCount(count || 0);
+    } catch (error: any) {
+      console.error('Failed to fetch archive count:', error);
+    }
+  };
 
   const fetchComplaints = async () => {
     try {
@@ -389,7 +406,7 @@ export default function AdminModeration() {
               className="border-gray-850"
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              ARCHIVE ({complaints.length})
+              ARCHIVE ({archiveCount})
             </Button>
           </div>
 
