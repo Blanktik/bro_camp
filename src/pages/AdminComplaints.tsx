@@ -494,7 +494,7 @@ export default function AdminComplaints() {
               variant="outline"
               className={`border-gray-850 text-gray-400 hover:text-white hover:border-white transition-all duration-300 ${
                 filteredComplaints.length > 0 
-                  ? 'animate-pulse shadow-[0_0_20px_rgba(255,255,255,0.3)] border-white/50' 
+                  ? 'animate-border-glow' 
                   : ''
               }`}
               disabled={filteredComplaints.length === 0}
