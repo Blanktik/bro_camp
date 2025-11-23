@@ -556,7 +556,7 @@ export default function StudentComplaints() {
                       key={complaint.id}
                       className={`p-6 hover:border-gray-700 transition-colors ${
                         complaint.flagged 
-                          ? 'border-red-500 animate-border-glow bg-red-950/10' 
+                          ? 'border-red-500 animate-border-glow-red bg-red-950/10' 
                           : 'border border-gray-850'
                       }`}
                     >
