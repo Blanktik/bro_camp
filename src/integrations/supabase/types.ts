@@ -26,6 +26,9 @@ export type Database = {
           appeal_submitted_at: string | null
           appeal_text: string | null
           created_at: string
+          deleted: boolean | null
+          deleted_at: string | null
+          deleted_by: string | null
           description: string
           edited_at: string | null
           flagged: boolean | null
@@ -57,6 +60,9 @@ export type Database = {
           appeal_submitted_at?: string | null
           appeal_text?: string | null
           created_at?: string
+          deleted?: boolean | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description: string
           edited_at?: string | null
           flagged?: boolean | null
@@ -88,6 +94,9 @@ export type Database = {
           appeal_submitted_at?: string | null
           appeal_text?: string | null
           created_at?: string
+          deleted?: boolean | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string
           edited_at?: string | null
           flagged?: boolean | null
