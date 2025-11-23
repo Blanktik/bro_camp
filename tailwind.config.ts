@@ -161,6 +161,16 @@ export default {
             borderColor: "hsl(var(--pure-white))"
           }
         },
+        "border-glow": {
+          "0%, 100%": {
+            borderColor: "hsl(var(--gray-850))",
+            boxShadow: "0 0 0px rgba(255, 255, 255, 0)"
+          },
+          "50%": {
+            borderColor: "hsl(var(--pure-white))",
+            boxShadow: "0 0 15px rgba(255, 255, 255, 0.5)"
+          }
+        },
         "text-shimmer": {
           "0%, 100%": {
             backgroundPosition: "0% 50%"
@@ -180,6 +190,7 @@ export default {
         "scale-in": "scale-in 0.4s ease-out",
         "glitch": "glitch 0.3s ease-in-out",
         "pulse-border": "pulse-border 2s ease-in-out infinite",
+        "border-glow": "border-glow 2s ease-in-out infinite",
         "text-shimmer": "text-shimmer 3s ease-in-out infinite"
       },
     },
