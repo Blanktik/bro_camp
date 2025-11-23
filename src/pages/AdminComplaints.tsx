@@ -492,10 +492,10 @@ export default function AdminComplaints() {
             <Button
               onClick={handleDownloadReport}
               variant="outline"
-              className={`border-gray-850 text-gray-400 hover:text-white hover:border-white transition-all duration-300 ${
+              className={`text-gray-400 hover:text-white transition-all duration-300 ${
                 filteredComplaints.length > 0 
-                  ? 'animate-border-glow' 
-                  : ''
+                  ? 'border-white animate-border-glow' 
+                  : 'border-gray-850'
               }`}
               disabled={filteredComplaints.length === 0}
             >

@@ -162,13 +162,20 @@ export default {
           }
         },
         "border-glow": {
-          "0%, 100%": {
-            borderColor: "hsl(var(--gray-850))",
-            boxShadow: "0 0 0px rgba(255, 255, 255, 0)"
+          "0%": {
+            boxShadow: "0 -2px 8px rgba(255, 255, 255, 0.6), 0 0 0 rgba(255, 255, 255, 0), 0 0 0 rgba(255, 255, 255, 0), 0 0 0 rgba(255, 255, 255, 0)"
+          },
+          "25%": {
+            boxShadow: "0 0 0 rgba(255, 255, 255, 0), 2px 0 8px rgba(255, 255, 255, 0.6), 0 0 0 rgba(255, 255, 255, 0), 0 0 0 rgba(255, 255, 255, 0)"
           },
           "50%": {
-            borderColor: "hsl(var(--pure-white))",
-            boxShadow: "0 0 15px rgba(255, 255, 255, 0.5)"
+            boxShadow: "0 0 0 rgba(255, 255, 255, 0), 0 0 0 rgba(255, 255, 255, 0), 0 2px 8px rgba(255, 255, 255, 0.6), 0 0 0 rgba(255, 255, 255, 0)"
+          },
+          "75%": {
+            boxShadow: "0 0 0 rgba(255, 255, 255, 0), 0 0 0 rgba(255, 255, 255, 0), 0 0 0 rgba(255, 255, 255, 0), -2px 0 8px rgba(255, 255, 255, 0.6)"
+          },
+          "100%": {
+            boxShadow: "0 -2px 8px rgba(255, 255, 255, 0.6), 0 0 0 rgba(255, 255, 255, 0), 0 0 0 rgba(255, 255, 255, 0), 0 0 0 rgba(255, 255, 255, 0)"
           }
         },
         "text-shimmer": {
