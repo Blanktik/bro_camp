@@ -178,6 +178,23 @@ export default {
             boxShadow: "0 -2px 8px rgba(255, 255, 255, 0.6), 0 0 0 rgba(255, 255, 255, 0), 0 0 0 rgba(255, 255, 255, 0), 0 0 0 rgba(255, 255, 255, 0)"
           }
         },
+        "border-glow-red": {
+          "0%": {
+            boxShadow: "0 -2px 8px rgba(239, 68, 68, 0.6), 0 0 0 rgba(239, 68, 68, 0), 0 0 0 rgba(239, 68, 68, 0), 0 0 0 rgba(239, 68, 68, 0)"
+          },
+          "25%": {
+            boxShadow: "0 0 0 rgba(239, 68, 68, 0), 2px 0 8px rgba(239, 68, 68, 0.6), 0 0 0 rgba(239, 68, 68, 0), 0 0 0 rgba(239, 68, 68, 0)"
+          },
+          "50%": {
+            boxShadow: "0 0 0 rgba(239, 68, 68, 0), 0 0 0 rgba(239, 68, 68, 0), 0 2px 8px rgba(239, 68, 68, 0.6), 0 0 0 rgba(239, 68, 68, 0)"
+          },
+          "75%": {
+            boxShadow: "0 0 0 rgba(239, 68, 68, 0), 0 0 0 rgba(239, 68, 68, 0), 0 0 0 rgba(239, 68, 68, 0), -2px 0 8px rgba(239, 68, 68, 0.6)"
+          },
+          "100%": {
+            boxShadow: "0 -2px 8px rgba(239, 68, 68, 0.6), 0 0 0 rgba(239, 68, 68, 0), 0 0 0 rgba(239, 68, 68, 0), 0 0 0 rgba(239, 68, 68, 0)"
+          }
+        },
         "text-shimmer": {
           "0%, 100%": {
             backgroundPosition: "0% 50%"
@@ -198,6 +215,7 @@ export default {
         "glitch": "glitch 0.3s ease-in-out",
         "pulse-border": "pulse-border 2s ease-in-out infinite",
         "border-glow": "border-glow 2s ease-in-out infinite",
+        "border-glow-red": "border-glow-red 2s ease-in-out infinite",
         "text-shimmer": "text-shimmer 3s ease-in-out infinite"
       },
     },
