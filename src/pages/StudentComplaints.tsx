@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film, Check, Info, Edit2, Mic } from 'lucide-react';
+import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film, Check, Info, Edit2, Mic, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { VoiceRecorder } from '@/components/VoiceRecorder';
 
@@ -26,6 +27,7 @@ interface Complaint {
   edited_at: string | null;
   is_anonymous: boolean;
   voice_note_url: string | null;
+  user_id: string | null;
 }
 
 export default function StudentComplaints() {
@@ -43,6 +45,7 @@ export default function StudentComplaints() {
   const [editingComplaint, setEditingComplaint] = useState<string | null>(null);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [voiceNoteBlob, setVoiceNoteBlob] = useState<Blob | null>(null);
+  const [deletingComplaint, setDeletingComplaint] = useState<string | null>(null);
 
   useEffect(() => {
     fetchComplaints();
@@ -221,6 +224,65 @@ export default function StudentComplaints() {
     setShowVoiceRecorder(false);
     setShowForm(false);
     setEditingComplaint(null);
+  };
+
+  const handleDelete = async (complaintId: string) => {
+    if (!user) return;
+
+    const complaintToDelete = complaints.find(c => c.id === complaintId);
+    if (!complaintToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('complaints')
+        .delete()
+        .eq('id', complaintId);
+
+      if (error) throw error;
+
+      // Store for undo
+      const deletedComplaint = complaintToDelete;
+      
+      // Remove from list
+      setComplaints(prev => prev.filter(c => c.id !== complaintId));
+      
+      // Show toast with undo
+      toast.success('Complaint deleted', {
+        action: {
+          label: 'Undo',
+          onClick: async () => {
+            try {
+              const { error: restoreError } = await supabase
+                .from('complaints')
+                .insert({
+                  id: deletedComplaint.id,
+                  user_id: deletedComplaint.user_id || user.id,
+                  title: deletedComplaint.title,
+                  description: deletedComplaint.description,
+                  status: deletedComplaint.status,
+                  is_anonymous: deletedComplaint.is_anonymous,
+                  media_urls: deletedComplaint.media_urls,
+                  voice_note_url: deletedComplaint.voice_note_url,
+                  created_at: deletedComplaint.created_at,
+                  admin_response: deletedComplaint.admin_response,
+                  viewed_at: deletedComplaint.viewed_at,
+                  edited_at: deletedComplaint.edited_at,
+                });
+
+              if (restoreError) throw restoreError;
+              fetchComplaints();
+              toast.success('Complaint restored');
+            } catch (error: any) {
+              toast.error('Failed to restore complaint');
+            }
+          },
+        },
+      });
+      
+      setDeletingComplaint(null);
+    } catch (error: any) {
+      toast.error(error.message);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -494,6 +556,40 @@ export default function StudentComplaints() {
                               )}
                             </Tooltip>
                           </TooltipProvider>
+                          
+                          {!complaint.viewed_at && !complaint.admin_response && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 px-2 text-gray-400 hover:text-red-500"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="bg-black border-gray-850">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-white">Are you sure?</AlertDialogTitle>
+                                  <AlertDialogDescription className="text-gray-400">
+                                    This action will delete your complaint. You can undo this action immediately after deletion.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className="border-gray-850 text-gray-400 hover:text-white hover:border-white">
+                                    Cancel
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(complaint.id)}
+                                    className="bg-red-500 text-white hover:bg-red-600"
+                                  >
+                                    Yes, Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                          
                           <div className="flex items-center gap-2">
                             <div className="flex items-center gap-0.5">
                               {complaint.viewed_at ? (
