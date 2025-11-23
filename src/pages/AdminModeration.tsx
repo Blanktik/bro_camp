@@ -18,7 +18,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, Shield, AlertTriangle, Flag, CheckCircle, Trash2, Eye, FileText } from 'lucide-react';
+import { ArrowLeft, Shield, AlertTriangle, Flag, CheckCircle, Trash2, Eye, FileText, RefreshCw } from 'lucide-react';
 import { VoicePlayer } from '@/components/VoicePlayer';
 
 interface Complaint {
@@ -49,10 +49,31 @@ export default function AdminModeration() {
 
   useEffect(() => {
     fetchComplaints();
+    
+    // Set up realtime subscription for complaints
+    const channel = supabase
+      .channel('moderation-complaints')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'complaints'
+        },
+        () => {
+          fetchComplaints();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchComplaints = async () => {
     try {
+      setLoading(true);
       const { data: complaintsData, error } = await supabase
         .from('complaints')
         .select('*')
@@ -60,6 +81,8 @@ export default function AdminModeration() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      console.log('Fetched complaints:', complaintsData?.length, 'Flagged:', complaintsData?.filter(c => c.flagged).length);
 
       // Fetch profiles
       const userIds = complaintsData
@@ -200,9 +223,21 @@ export default function AdminModeration() {
 
       <main className="p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2 tracking-tight">Moderation Center</h1>
-            <p className="text-gray-400 text-sm">Review and manage flagged content</p>
+          <div className="mb-8 flex items-start justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-2 tracking-tight">Moderation Center</h1>
+              <p className="text-gray-400 text-sm">Review and manage flagged content</p>
+            </div>
+            <Button
+              onClick={fetchComplaints}
+              variant="outline"
+              size="sm"
+              className="border-gray-850 text-gray-400 hover:text-white hover:border-white"
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              REFRESH
+            </Button>
           </div>
 
           {/* Stats */}
