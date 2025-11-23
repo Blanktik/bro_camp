@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film, Check, Info, Edit2, Mic, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film, Check, Info, Edit2, Mic, Trash2, AlertTriangle } from 'lucide-react';
 import { VoicePlayer } from '@/components/VoicePlayer';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -32,6 +32,9 @@ interface Complaint {
   responded_at: string | null;
   resolved_at: string | null;
   admin_voice_note_url: string | null;
+  flagged: boolean;
+  flagged_reason: string | null;
+  flagged_at: string | null;
 }
 
 export default function StudentComplaints() {
@@ -516,12 +519,22 @@ export default function StudentComplaints() {
                   {complaints.map((complaint) => (
                     <div
                       key={complaint.id}
-                      className="border border-gray-850 p-6 hover:border-gray-700 transition-colors"
+                      className={`p-6 hover:border-gray-700 transition-colors ${
+                        complaint.flagged 
+                          ? 'border-red-500 animate-border-glow bg-red-950/10' 
+                          : 'border border-gray-850'
+                      }`}
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="font-bold text-lg">{complaint.title}</h3>
+                            {complaint.flagged && (
+                              <Badge className="text-xs tracking-wider bg-red-600 text-white">
+                                <AlertTriangle className="w-3 h-3 mr-1" />
+                                FLAGGED
+                              </Badge>
+                            )}
                             <Badge className={`text-xs tracking-wider ${getStatusColor(complaint.status)}`}>
                               {complaint.status.toUpperCase()}
                             </Badge>
@@ -628,6 +641,27 @@ export default function StudentComplaints() {
                       <p className="text-gray-300 mb-4 text-sm leading-relaxed">
                         {complaint.description}
                       </p>
+
+                      {complaint.flagged && complaint.flagged_reason && (
+                        <div className="mb-4 p-4 bg-red-950/30 border border-red-800 rounded">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-xs text-red-400 font-semibold tracking-wider mb-1">
+                                FLAGGED FOR MODERATION
+                              </p>
+                              <p className="text-sm text-red-300">
+                                {complaint.flagged_reason}
+                              </p>
+                              {complaint.flagged_at && (
+                                <p className="text-xs text-red-500 mt-2">
+                                  Flagged on {format(new Date(complaint.flagged_at), 'MMM d, yyyy h:mm a')}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {complaint.media_urls && complaint.media_urls.length > 0 && (
                         <div className="mb-4 grid grid-cols-2 gap-2">
