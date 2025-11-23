@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { ArrowLeft, Plus, Upload, X, Image as ImageIcon, Film, Check, Info, Edit2, Mic, Trash2 } from 'lucide-react';
+import { VoicePlayer } from '@/components/VoicePlayer';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
@@ -30,6 +31,7 @@ interface Complaint {
   user_id: string | null;
   responded_at: string | null;
   resolved_at: string | null;
+  admin_voice_note_url: string | null;
 }
 
 export default function StudentComplaints() {
@@ -663,6 +665,16 @@ export default function StudentComplaints() {
                             )}
                           </div>
                           <p className="text-sm text-gray-300">{complaint.admin_response}</p>
+                          
+                          {complaint.admin_voice_note_url && (
+                            <div className="mt-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Mic className="w-4 h-4 text-primary" />
+                                <span className="text-xs text-gray-500 tracking-wider">ADMIN VOICE NOTE</span>
+                              </div>
+                              <VoicePlayer audioUrl={complaint.admin_voice_note_url} />
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

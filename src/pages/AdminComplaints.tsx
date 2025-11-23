@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { ArrowLeft, UserX, Bell, CheckCircle2, Download, ArrowUpCircle, HelpCircle, Copy, Volume2, Search } from 'lucide-react';
+import { ArrowLeft, UserX, Bell, CheckCircle2, Download, ArrowUpCircle, HelpCircle, Copy, Volume2, Search, Mic, X } from 'lucide-react';
 import { VoicePlayer } from '@/components/VoicePlayer';
+import { VoiceRecorder } from '@/components/VoiceRecorder';
 
 interface Complaint {
   id: string;
@@ -29,6 +30,7 @@ interface Complaint {
   responded_at: string | null;
   resolved_at: string | null;
   admin_profile?: { full_name: string; email: string } | null;
+  admin_voice_note_url: string | null;
 }
 
 const quickMacros = [
@@ -50,6 +52,8 @@ export default function AdminComplaints() {
   const [editingInProgress, setEditingInProgress] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'in_progress' | 'resolved' | 'voice_notes'>('all');
+  const [showAdminVoiceRecorder, setShowAdminVoiceRecorder] = useState(false);
+  const [adminVoiceNoteBlob, setAdminVoiceNoteBlob] = useState<Blob | null>(null);
 
   useEffect(() => {
     fetchComplaints();
@@ -171,12 +175,36 @@ export default function AdminComplaints() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      let adminVoiceUrl = null;
+      
+      // Upload admin voice note if present
+      if (adminVoiceNoteBlob) {
+        const fileName = `${user?.id}/${Date.now()}.webm`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('complaint-media')
+          .upload(fileName, adminVoiceNoteBlob, {
+            contentType: 'audio/webm',
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('complaint-media')
+          .getPublicUrl(fileName);
+        
+        adminVoiceUrl = urlData.publicUrl;
+      }
+      
       const updateData: any = {
         admin_response: response,
         status: selectedStatus,
         admin_id: user?.id,
         responded_at: new Date().toISOString(),
       };
+      
+      if (adminVoiceUrl) {
+        updateData.admin_voice_note_url = adminVoiceUrl;
+      }
       
       // Add resolved_at timestamp if status is resolved
       if (selectedStatus === 'resolved') {
@@ -194,6 +222,8 @@ export default function AdminComplaints() {
       setSelectedComplaint(null);
       setResponse('');
       setSelectedStatus('resolved');
+      setShowAdminVoiceRecorder(false);
+      setAdminVoiceNoteBlob(null);
       fetchComplaints();
     } catch (error: any) {
       toast.error(error.message);
@@ -654,6 +684,44 @@ export default function AdminComplaints() {
                             className="bg-transparent border-gray-850 focus:border-white resize-none"
                             rows={4}
                           />
+                          
+                          {showAdminVoiceRecorder ? (
+                            <div className="space-y-2">
+                              <p className="text-xs text-gray-500 tracking-wider">ATTACH VOICE NOTE</p>
+                              <VoiceRecorder
+                                onRecordingComplete={(blob) => {
+                                  setAdminVoiceNoteBlob(blob);
+                                  setShowAdminVoiceRecorder(false);
+                                  toast.success('Voice note recorded');
+                                }}
+                                onRecordingCancel={() => setShowAdminVoiceRecorder(false)}
+                              />
+                            </div>
+                          ) : adminVoiceNoteBlob ? (
+                            <div className="flex items-center gap-2 p-2 border border-gray-850 bg-gray-900/50">
+                              <Mic className="w-4 h-4 text-primary" />
+                              <span className="text-xs text-gray-400 flex-1">Voice note attached</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setAdminVoiceNoteBlob(null)}
+                                className="h-6 w-6 p-0 text-gray-500 hover:text-red-500"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowAdminVoiceRecorder(true)}
+                              className="border-gray-850 text-gray-400 hover:text-white hover:border-white text-xs h-8"
+                            >
+                              <Mic className="w-3 h-3 mr-1" />
+                              ADD VOICE NOTE
+                            </Button>
+                          )}
+                          
                           <div className="space-y-3">
                             <div>
                               <p className="text-xs text-gray-500 mb-2 tracking-wider">SET STATUS:</p>
@@ -689,6 +757,8 @@ export default function AdminComplaints() {
                                   setSelectedComplaint(null);
                                   setResponse('');
                                   setSelectedStatus('resolved');
+                                  setShowAdminVoiceRecorder(false);
+                                  setAdminVoiceNoteBlob(null);
                                 }}
                                 variant="outline"
                                 className="border-gray-850 text-gray-400 hover:text-white hover:border-white text-xs h-8"
