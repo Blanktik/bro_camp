@@ -18,7 +18,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, Shield, AlertTriangle, Flag, CheckCircle, Trash2, Eye, FileText, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Shield, AlertTriangle, Flag, CheckCircle, Trash2, Eye, FileText, RefreshCw, X } from 'lucide-react';
 import { VoicePlayer } from '@/components/VoicePlayer';
 
 interface Complaint {
@@ -36,6 +36,10 @@ interface Complaint {
   media_urls: string[] | null;
   voice_note_url: string | null;
   profiles: { full_name: string; email: string } | null;
+  appeal_text: string | null;
+  appeal_submitted_at: string | null;
+  appeal_status: string | null;
+  appeal_response: string | null;
 }
 
 export default function AdminModeration() {
@@ -46,6 +50,8 @@ export default function AdminModeration() {
   const [flagReason, setFlagReason] = useState('');
   const [moderationNotes, setModerationNotes] = useState('');
   const [viewFilter, setViewFilter] = useState<'all' | 'flagged'>('flagged');
+  const [appealResponse, setAppealResponse] = useState('');
+  const [respondingToAppeal, setRespondingToAppeal] = useState<string | null>(null);
 
   useEffect(() => {
     fetchComplaints();
@@ -192,6 +198,40 @@ export default function AdminModeration() {
       fetchComplaints();
     } catch (error: any) {
       toast.error(`Failed to ${action} complaint`);
+    }
+  };
+
+  const handleAppealResponse = async (complaintId: string, decision: 'approved' | 'rejected') => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const updateData: any = {
+        appeal_status: decision,
+        appeal_reviewed_by: user?.id,
+        appeal_reviewed_at: new Date().toISOString(),
+        appeal_response: appealResponse.trim() || null,
+      };
+
+      // If appeal approved, unflag the complaint
+      if (decision === 'approved') {
+        updateData.flagged = false;
+        updateData.flagged_reason = null;
+        updateData.flagged_at = null;
+      }
+
+      const { error } = await supabase
+        .from('complaints')
+        .update(updateData)
+        .eq('id', complaintId);
+
+      if (error) throw error;
+
+      toast.success(`Appeal ${decision}`);
+      setAppealResponse('');
+      setRespondingToAppeal(null);
+      fetchComplaints();
+    } catch (error: any) {
+      toast.error('Failed to respond to appeal');
     }
   };
 
@@ -360,6 +400,94 @@ export default function AdminModeration() {
                         <div className="mt-3 p-3 bg-gray-900 border border-gray-800">
                           <p className="text-xs text-gray-400 mb-1">MODERATION NOTES:</p>
                           <p className="text-sm">{complaint.moderation_notes}</p>
+                        </div>
+                      )}
+
+                      {/* Appeal Display */}
+                      {complaint.appeal_text && (
+                        <div className="mt-3 p-4 bg-yellow-950/20 border border-yellow-800 rounded">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Badge className={`text-xs ${
+                                complaint.appeal_status === 'pending' ? 'bg-yellow-600' :
+                                complaint.appeal_status === 'approved' ? 'bg-green-600' :
+                                'bg-red-700'
+                              }`}>
+                                APPEAL {complaint.appeal_status?.toUpperCase() || 'PENDING'}
+                              </Badge>
+                              {complaint.appeal_submitted_at && (
+                                <span className="text-xs text-gray-500">
+                                  {new Date(complaint.appeal_submitted_at).toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-xs text-yellow-400 font-semibold mb-1">STUDENT'S APPEAL:</p>
+                          <p className="text-sm text-yellow-100 mb-3">{complaint.appeal_text}</p>
+
+                          {complaint.appeal_response && (
+                            <div className="mt-3 pt-3 border-t border-yellow-800">
+                              <p className="text-xs text-yellow-400 font-semibold mb-1">YOUR RESPONSE:</p>
+                              <p className="text-sm text-yellow-100">{complaint.appeal_response}</p>
+                            </div>
+                          )}
+
+                          {complaint.appeal_status === 'pending' && (
+                            <div className="mt-3 pt-3 border-t border-yellow-800">
+                              {respondingToAppeal === complaint.id ? (
+                                <div className="space-y-3">
+                                  <Label htmlFor={`appeal-response-${complaint.id}`} className="text-xs text-yellow-300">
+                                    RESPONSE TO APPEAL (OPTIONAL)
+                                  </Label>
+                                  <Textarea
+                                    id={`appeal-response-${complaint.id}`}
+                                    value={appealResponse}
+                                    onChange={(e) => setAppealResponse(e.target.value)}
+                                    placeholder="Provide feedback on the appeal decision..."
+                                    className="bg-yellow-950/20 border-yellow-700 text-white min-h-[80px]"
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      onClick={() => handleAppealResponse(complaint.id, 'approved')}
+                                      size="sm"
+                                      className="bg-green-600 text-white hover:bg-green-700"
+                                    >
+                                      <CheckCircle className="w-3 h-3 mr-1" />
+                                      APPROVE APPEAL
+                                    </Button>
+                                    <Button
+                                      onClick={() => handleAppealResponse(complaint.id, 'rejected')}
+                                      size="sm"
+                                      className="bg-red-600 text-white hover:bg-red-700"
+                                    >
+                                      <X className="w-3 h-3 mr-1" />
+                                      REJECT APPEAL
+                                    </Button>
+                                    <Button
+                                      onClick={() => {
+                                        setRespondingToAppeal(null);
+                                        setAppealResponse('');
+                                      }}
+                                      variant="outline"
+                                      size="sm"
+                                      className="border-yellow-700"
+                                    >
+                                      CANCEL
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <Button
+                                  onClick={() => setRespondingToAppeal(complaint.id)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-yellow-700 text-yellow-300 hover:bg-yellow-950/20"
+                                >
+                                  RESPOND TO APPEAL
+                                </Button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

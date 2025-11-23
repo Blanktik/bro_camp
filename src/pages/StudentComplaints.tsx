@@ -35,6 +35,11 @@ interface Complaint {
   flagged: boolean;
   flagged_reason: string | null;
   flagged_at: string | null;
+  appeal_text: string | null;
+  appeal_submitted_at: string | null;
+  appeal_status: string | null;
+  appeal_reviewed_at: string | null;
+  appeal_response: string | null;
 }
 
 export default function StudentComplaints() {
@@ -53,6 +58,8 @@ export default function StudentComplaints() {
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [voiceNoteBlob, setVoiceNoteBlob] = useState<Blob | null>(null);
   const [deletingComplaint, setDeletingComplaint] = useState<string | null>(null);
+  const [appealText, setAppealText] = useState('');
+  const [appealingComplaint, setAppealingComplaint] = useState<string | null>(null);
 
   useEffect(() => {
     fetchComplaints();
@@ -289,6 +296,34 @@ export default function StudentComplaints() {
       setDeletingComplaint(null);
     } catch (error: any) {
       toast.error(error.message);
+    }
+  };
+
+  const handleAppealSubmit = async (complaintId: string) => {
+    if (!user || !appealText.trim()) {
+      toast.error('Please provide a reason for your appeal');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('complaints')
+        .update({
+          appeal_text: appealText.trim(),
+          appeal_submitted_at: new Date().toISOString(),
+          appeal_status: 'pending',
+        })
+        .eq('id', complaintId);
+
+      if (error) throw error;
+
+      toast.success('Appeal submitted successfully');
+      setAppealText('');
+      setAppealingComplaint(null);
+      fetchComplaints();
+    } catch (error: any) {
+      toast.error('Failed to submit appeal');
+      console.error(error);
     }
   };
 
@@ -646,7 +681,7 @@ export default function StudentComplaints() {
                         <div className="mb-4 p-4 bg-red-950/30 border border-red-800 rounded">
                           <div className="flex items-start gap-2">
                             <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                            <div>
+                            <div className="flex-1">
                               <p className="text-xs text-red-400 font-semibold tracking-wider mb-1">
                                 FLAGGED FOR MODERATION
                               </p>
@@ -660,6 +695,94 @@ export default function StudentComplaints() {
                               )}
                             </div>
                           </div>
+
+                          {/* Appeal Status */}
+                          {complaint.appeal_status && (
+                            <div className="mt-3 pt-3 border-t border-red-800">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Badge className={`text-xs ${
+                                  complaint.appeal_status === 'pending' ? 'bg-yellow-600' :
+                                  complaint.appeal_status === 'approved' ? 'bg-green-600' :
+                                  'bg-red-700'
+                                }`}>
+                                  APPEAL {complaint.appeal_status.toUpperCase()}
+                                </Badge>
+                                {complaint.appeal_submitted_at && (
+                                  <span className="text-xs text-red-400">
+                                    Submitted {format(new Date(complaint.appeal_submitted_at), 'MMM d, h:mm a')}
+                                  </span>
+                                )}
+                              </div>
+                              {complaint.appeal_text && (
+                                <div className="text-sm text-red-200 mb-2">
+                                  <span className="text-xs text-red-400 font-semibold">Your appeal:</span>
+                                  <p className="mt-1">{complaint.appeal_text}</p>
+                                </div>
+                              )}
+                              {complaint.appeal_response && (
+                                <div className="mt-2 p-2 bg-red-950/50 rounded">
+                                  <p className="text-xs text-red-400 font-semibold mb-1">Admin Response:</p>
+                                  <p className="text-sm text-red-200">{complaint.appeal_response}</p>
+                                  {complaint.appeal_reviewed_at && (
+                                    <p className="text-xs text-red-500 mt-1">
+                                      Reviewed {format(new Date(complaint.appeal_reviewed_at), 'MMM d, yyyy h:mm a')}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Appeal Form */}
+                          {complaint.flagged && !complaint.appeal_status && (
+                            <div className="mt-3 pt-3 border-t border-red-800">
+                              {appealingComplaint === complaint.id ? (
+                                <div className="space-y-3">
+                                  <Label htmlFor={`appeal-${complaint.id}`} className="text-xs text-red-300">
+                                    EXPLAIN WHY THIS SHOULD BE UNFLAGGED
+                                  </Label>
+                                  <Textarea
+                                    id={`appeal-${complaint.id}`}
+                                    value={appealText}
+                                    onChange={(e) => setAppealText(e.target.value)}
+                                    placeholder="Provide additional context or explanation for why this complaint should be reviewed..."
+                                    className="bg-red-950/20 border-red-700 text-white placeholder:text-red-400/50 min-h-[100px]"
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      onClick={() => handleAppealSubmit(complaint.id)}
+                                      size="sm"
+                                      className="bg-white text-black hover:bg-gray-200"
+                                      disabled={!appealText.trim()}
+                                    >
+                                      SUBMIT APPEAL
+                                    </Button>
+                                    <Button
+                                      onClick={() => {
+                                        setAppealingComplaint(null);
+                                        setAppealText('');
+                                      }}
+                                      variant="outline"
+                                      size="sm"
+                                      className="border-red-700 text-red-300 hover:bg-red-950/20"
+                                    >
+                                      CANCEL
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <Button
+                                  onClick={() => setAppealingComplaint(complaint.id)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-red-700 text-red-300 hover:bg-red-950/20 hover:text-white"
+                                >
+                                  <AlertTriangle className="w-3 h-3 mr-2" />
+                                  SUBMIT APPEAL
+                                </Button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
 
