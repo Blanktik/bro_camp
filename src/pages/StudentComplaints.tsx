@@ -244,6 +244,13 @@ export default function StudentComplaints() {
   const handleDelete = async (complaintId: string) => {
     if (!user) return;
 
+    // Check if complaint is flagged
+    const complaint = complaints.find(c => c.id === complaintId);
+    if (complaint?.flagged) {
+      toast.error('Cannot delete flagged complaints. Please appeal the flag first.');
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('complaints')
