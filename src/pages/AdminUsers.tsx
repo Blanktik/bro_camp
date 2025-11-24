@@ -38,7 +38,7 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [actionType, setActionType] = useState<'promote' | 'demote' | 'warn' | 'timeout' | 'ban' | null>(null);
+  const [actionType, setActionType] = useState<'promote' | 'demote' | 'warning' | 'timeout' | 'ban' | null>(null);
   const [moderationReason, setModerationReason] = useState('');
   const [timeoutDays, setTimeoutDays] = useState(7);
 
@@ -125,7 +125,7 @@ export default function AdminUsers() {
           .eq('role', 'admin');
         if (error) throw error;
         toast.success(`${selectedUser.full_name} demoted to Student`);
-      } else if (actionType === 'warn' || actionType === 'timeout' || actionType === 'ban') {
+      } else if (actionType === 'warning' || actionType === 'timeout' || actionType === 'ban') {
         if (!moderationReason.trim()) {
           toast.error('Please provide a reason for this action');
           return;
@@ -146,7 +146,7 @@ export default function AdminUsers() {
         
         if (error) throw error;
         
-        const actionLabels = { warn: 'Warning issued', timeout: 'Timeout applied', ban: 'User banned' };
+        const actionLabels = { warning: 'Warning issued', timeout: 'Timeout applied', ban: 'User banned' };
         toast.success(actionLabels[actionType]);
       }
 
@@ -290,7 +290,7 @@ export default function AdminUsers() {
                         <Button
                           onClick={() => {
                             setSelectedUser(user);
-                            setActionType('warn');
+                            setActionType('warning');
                           }}
                           size="sm"
                           variant="outline"
@@ -347,20 +347,20 @@ export default function AdminUsers() {
             <AlertDialogTitle className="text-xl font-bold tracking-tight">
               {actionType === 'promote' && 'Promote to Admin'}
               {actionType === 'demote' && 'Demote to Student'}
-              {actionType === 'warn' && 'Issue Warning'}
+              {actionType === 'warning' && 'Issue Warning'}
               {actionType === 'timeout' && 'Timeout User'}
               {actionType === 'ban' && 'Ban User'}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-400">
               {actionType === 'promote' && `Grant admin privileges to ${selectedUser?.full_name}? They will be able to manage complaints and moderate content.`}
               {actionType === 'demote' && `Remove admin privileges from ${selectedUser?.full_name}? They will return to student access only.`}
-              {actionType === 'warn' && `Issue a formal warning to ${selectedUser?.full_name}. This will be recorded in their moderation history.`}
+              {actionType === 'warning' && `Issue a formal warning to ${selectedUser?.full_name}. This will be recorded in their moderation history.`}
               {actionType === 'timeout' && `Temporarily restrict ${selectedUser?.full_name}'s access. They will not be able to submit complaints during this period.`}
               {actionType === 'ban' && `Permanently ban ${selectedUser?.full_name} from the platform. This action should only be used for serious violations.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          {(actionType === 'warn' || actionType === 'timeout' || actionType === 'ban') && (
+          {(actionType === 'warning' || actionType === 'timeout' || actionType === 'ban') && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="moderation-reason" className="text-xs tracking-wider text-gray-400">
@@ -407,11 +407,11 @@ export default function AdminUsers() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRoleChange}
-              disabled={(actionType === 'warn' || actionType === 'timeout' || actionType === 'ban') && !moderationReason.trim()}
+              disabled={(actionType === 'warning' || actionType === 'timeout' || actionType === 'ban') && !moderationReason.trim()}
               className={`${
                 actionType === 'ban' ? 'bg-red-600 hover:bg-red-700' :
                 actionType === 'timeout' ? 'bg-yellow-600 hover:bg-yellow-700' :
-                actionType === 'warn' ? 'bg-orange-600 hover:bg-orange-700' :
+                actionType === 'warning' ? 'bg-orange-600 hover:bg-orange-700' :
                 'bg-white text-black hover:bg-gray-200'
               }`}
             >
