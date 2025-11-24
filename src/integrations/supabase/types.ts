@@ -229,6 +229,11 @@ export type Database = {
       }
       user_moderation: {
         Row: {
+          appeal_reviewed_at: string | null
+          appeal_reviewed_by: string | null
+          appeal_status: string | null
+          appeal_submitted_at: string | null
+          appeal_text: string | null
           created_at: string
           expires_at: string | null
           id: string
@@ -240,6 +245,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          appeal_reviewed_at?: string | null
+          appeal_reviewed_by?: string | null
+          appeal_status?: string | null
+          appeal_submitted_at?: string | null
+          appeal_text?: string | null
           created_at?: string
           expires_at?: string | null
           id?: string
@@ -251,6 +261,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          appeal_reviewed_at?: string | null
+          appeal_reviewed_by?: string | null
+          appeal_status?: string | null
+          appeal_submitted_at?: string | null
+          appeal_text?: string | null
           created_at?: string
           expires_at?: string | null
           id?: string
