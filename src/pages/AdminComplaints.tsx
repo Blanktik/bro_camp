@@ -32,6 +32,8 @@ interface Complaint {
   resolved_at: string | null;
   admin_profile?: { full_name: string; email: string } | null;
   admin_voice_note_url: string | null;
+  flagged?: boolean;
+  flagged_reason?: string | null;
 }
 
 const quickMacros = [
@@ -352,6 +354,24 @@ export default function AdminComplaints() {
       padding: 30px;
       margin-bottom: 20px;
     }
+    .complaint-flagged {
+      background: #111;
+      border: 2px solid #dc2626;
+      padding: 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 20px rgba(220, 38, 38, 0.3);
+    }
+    .flagged-indicator {
+      background: #dc2626;
+      color: #fff;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      border-radius: 2px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
     .complaint-header {
       display: flex;
       justify-content: space-between;
@@ -453,7 +473,8 @@ export default function AdminComplaints() {
     </div>
 
     ${filteredComplaints.map(complaint => `
-      <div class="complaint">
+      <div class="${complaint.flagged ? 'complaint-flagged' : 'complaint'}">
+        ${complaint.flagged ? '<div class="flagged-indicator">⚠️ FLAGGED FOR REVIEW</div>' : ''}
         <div class="complaint-header">
           <div>
             <div class="complaint-title">
@@ -471,6 +492,15 @@ export default function AdminComplaints() {
         <div class="complaint-content">
           ${complaint.description}
         </div>
+
+        ${complaint.flagged && complaint.flagged_reason ? `
+          <div style="background: #1a0a0a; border: 1px solid #dc2626; padding: 15px; margin-bottom: 20px;">
+            <div style="color: #dc2626; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+              🚩 FLAG REASON
+            </div>
+            <div style="color: #ccc;">${complaint.flagged_reason}</div>
+          </div>
+        ` : ''}
 
         ${complaint.media_urls && complaint.media_urls.length > 0 ? `
           <div class="media-grid">
