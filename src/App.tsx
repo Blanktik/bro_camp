@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ModerationOverlay } from "@/components/ModerationOverlay";
 import { AnimatePresence, motion } from "framer-motion";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -199,7 +200,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AnimatedRoutes />
+          <ModerationOverlay>
+            <AnimatedRoutes />
+          </ModerationOverlay>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
