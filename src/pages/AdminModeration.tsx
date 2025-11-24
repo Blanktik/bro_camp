@@ -306,11 +306,13 @@ export default function AdminModeration() {
   };
 
   const flaggedCount = complaints.filter(c => c.flagged && !c.deleted).length;
-  const filteredComplaints = viewFilter === 'flagged' 
-    ? complaints.filter(c => c.flagged)
-    : viewFilter === 'archive'
+  
+  // Apply view filter
+  const filteredComplaints = viewFilter === 'archive' 
     ? complaints
-    : complaints;
+    : viewFilter === 'flagged'
+    ? complaints.filter(c => c.flagged && !c.deleted)
+    : complaints.filter(c => !c.deleted);
 
   if (loading) {
     return (
