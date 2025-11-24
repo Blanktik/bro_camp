@@ -17,6 +17,7 @@ export type Database = {
       complaints: {
         Row: {
           admin_id: string | null
+          admin_info_request: string | null
           admin_response: string | null
           admin_voice_note_url: string | null
           appeal_response: string | null
@@ -51,6 +52,7 @@ export type Database = {
         }
         Insert: {
           admin_id?: string | null
+          admin_info_request?: string | null
           admin_response?: string | null
           admin_voice_note_url?: string | null
           appeal_response?: string | null
@@ -85,6 +87,7 @@ export type Database = {
         }
         Update: {
           admin_id?: string | null
+          admin_info_request?: string | null
           admin_response?: string | null
           admin_voice_note_url?: string | null
           appeal_response?: string | null
@@ -224,6 +227,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_moderation: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          issued_at: string
+          issued_by: string
+          moderation_type: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          issued_at?: string
+          issued_by: string
+          moderation_type: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          issued_at?: string
+          issued_by?: string
+          moderation_type?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -250,6 +289,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_warning_count: { Args: { user_uuid: string }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -258,6 +298,8 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_user_banned: { Args: { user_uuid: string }; Returns: boolean }
+      is_user_timed_out: { Args: { user_uuid: string }; Returns: boolean }
     }
     Enums: {
       app_role: "student" | "admin" | "super_admin"

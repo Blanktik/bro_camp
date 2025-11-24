@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, UserX, Bell, CheckCircle2, Download, ArrowUpCircle, HelpCircle, Copy, Volume2, Search, Mic, X } from 'lucide-react';
 import { VoicePlayer } from '@/components/VoicePlayer';
 import { VoiceRecorder } from '@/components/VoiceRecorder';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 interface Complaint {
   id: string;
@@ -35,7 +36,7 @@ interface Complaint {
 
 const quickMacros = [
   { label: 'NOTED', icon: Bell, response: 'We are working on this. Will update you soon.', status: 'in_progress' },
-  { label: 'NEED INFO', icon: HelpCircle, response: 'We need more information to address this. Please provide additional details.', status: 'in_progress' },
+  { label: 'NEED INFO', icon: HelpCircle, response: '', status: 'need_more_info', requiresInput: true },
   { label: 'ESCALATED', icon: ArrowUpCircle, response: 'This has been escalated to senior management for review.', status: 'in_progress' },
   { label: 'DUPLICATE', icon: Copy, response: 'This is a duplicate of an existing complaint. We are already working on it.', status: 'resolved' },
   { label: 'DONE', icon: CheckCircle2, response: 'Issue has been resolved. Thank you for bringing this to our attention.', status: 'resolved' },
@@ -54,6 +55,11 @@ export default function AdminComplaints() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'in_progress' | 'resolved' | 'voice_notes'>('all');
   const [showAdminVoiceRecorder, setShowAdminVoiceRecorder] = useState(false);
   const [adminVoiceNoteBlob, setAdminVoiceNoteBlob] = useState<Blob | null>(null);
+  const [showNeedInfoDialog, setShowNeedInfoDialog] = useState(false);
+  const [needInfoComplaintId, setNeedInfoComplaintId] = useState<string | null>(null);
+  const [needInfoText, setNeedInfoText] = useState('');
+  const [needInfoVoiceBlob, setNeedInfoVoiceBlob] = useState<Blob | null>(null);
+  const [showNeedInfoVoiceRecorder, setShowNeedInfoVoiceRecorder] = useState(false);
 
   useEffect(() => {
     fetchComplaints();
@@ -141,7 +147,14 @@ export default function AdminComplaints() {
     }
   };
 
-  const handleQuickMacro = async (complaintId: string, macroResponse: string, status: string) => {
+  const handleQuickMacro = async (complaintId: string, macroResponse: string, status: string, requiresInput?: boolean) => {
+    if (requiresInput) {
+      // Open dialog for NEED INFO
+      setNeedInfoComplaintId(complaintId);
+      setShowNeedInfoDialog(true);
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -168,6 +181,62 @@ export default function AdminComplaints() {
       fetchComplaints();
     } catch (error: any) {
       toast.error(error.message);
+    }
+  };
+
+  const handleNeedInfoSubmit = async () => {
+    if (!needInfoComplaintId || (!needInfoText.trim() && !needInfoVoiceBlob)) {
+      toast.error('Please provide information request via text or voice note');
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      let voiceUrl: string | null = null;
+      if (needInfoVoiceBlob) {
+        const fileName = `${user!.id}/${Date.now()}-admin-voice-note.webm`;
+        const { error: uploadError } = await supabase.storage
+          .from('complaint-media')
+          .upload(fileName, needInfoVoiceBlob);
+
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('complaint-media')
+            .getPublicUrl(fileName);
+          voiceUrl = publicUrl;
+        }
+      }
+
+      const updateData: any = {
+        admin_response: needInfoText.trim() || 'Please provide more information (voice note attached)',
+        admin_info_request: needInfoText.trim(),
+        status: 'need_more_info',
+        admin_id: user?.id,
+        responded_at: new Date().toISOString(),
+      };
+
+      if (voiceUrl) {
+        updateData.admin_voice_note_url = voiceUrl;
+      }
+      
+      const { error } = await supabase
+        .from('complaints')
+        .update(updateData)
+        .eq('id', needInfoComplaintId);
+
+      if (error) throw error;
+
+      toast.success('Information request sent');
+      setShowNeedInfoDialog(false);
+      setNeedInfoComplaintId(null);
+      setNeedInfoText('');
+      setNeedInfoVoiceBlob(null);
+      setShowNeedInfoVoiceRecorder(false);
+      fetchComplaints();
+    } catch (error: any) {
+      toast.error('Failed to send request');
+      console.error(error);
     }
   };
 
@@ -661,10 +730,10 @@ export default function AdminComplaints() {
                           {quickMacros.map((macro) => (
                             <Tooltip key={macro.label}>
                               <TooltipTrigger asChild>
-                                <Button
+                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleQuickMacro(complaint.id, macro.response, macro.status)}
+                                  onClick={() => handleQuickMacro(complaint.id, macro.response, macro.status, macro.requiresInput)}
                                   className="border-gray-850 text-gray-400 hover:text-white hover:border-white h-7 px-3 text-xs"
                                 >
                                   <macro.icon className="w-3 h-3 mr-1" />
@@ -845,6 +914,102 @@ export default function AdminComplaints() {
           </div>
         </div>
       </main>
+
+      {/* Need More Info Dialog */}
+      <Dialog open={showNeedInfoDialog} onOpenChange={setShowNeedInfoDialog}>
+        <DialogContent className="bg-black border border-gray-850 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold tracking-tight">Request More Information</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Specify what additional details you need from the student
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="need-info-text" className="text-xs tracking-wider text-gray-400">
+                INFORMATION REQUEST
+              </Label>
+              <Textarea
+                id="need-info-text"
+                value={needInfoText}
+                onChange={(e) => setNeedInfoText(e.target.value)}
+                placeholder="What specific information do you need from the student?"
+                className="bg-transparent border-gray-850 focus:border-white resize-none"
+                rows={4}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs tracking-wider text-gray-400">
+                OR RECORD VOICE NOTE
+              </Label>
+              {!showNeedInfoVoiceRecorder && !needInfoVoiceBlob && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowNeedInfoVoiceRecorder(true)}
+                  className="w-full border-gray-850 text-gray-400 hover:text-white hover:border-white"
+                >
+                  <Mic className="w-4 h-4 mr-2" />
+                  RECORD VOICE NOTE
+                </Button>
+              )}
+              {showNeedInfoVoiceRecorder && (
+                <VoiceRecorder
+                  onRecordingComplete={(blob) => {
+                    setNeedInfoVoiceBlob(blob);
+                    setShowNeedInfoVoiceRecorder(false);
+                  }}
+                  onRecordingCancel={() => setShowNeedInfoVoiceRecorder(false)}
+                />
+              )}
+              {needInfoVoiceBlob && !showNeedInfoVoiceRecorder && (
+                <div className="border border-gray-850 p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Mic className="w-4 h-4 text-primary" />
+                    <span className="text-sm">Voice note recorded</span>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setNeedInfoVoiceBlob(null);
+                      setShowNeedInfoVoiceRecorder(false);
+                    }}
+                    className="text-gray-500 hover:text-white"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowNeedInfoDialog(false);
+                  setNeedInfoText('');
+                  setNeedInfoVoiceBlob(null);
+                  setShowNeedInfoVoiceRecorder(false);
+                }}
+                className="flex-1 border-gray-850 text-gray-400 hover:text-white hover:border-white"
+              >
+                CANCEL
+              </Button>
+              <Button
+                onClick={handleNeedInfoSubmit}
+                disabled={!needInfoText.trim() && !needInfoVoiceBlob}
+                className="flex-1 bg-white text-black hover:bg-gray-200"
+              >
+                SEND REQUEST
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
