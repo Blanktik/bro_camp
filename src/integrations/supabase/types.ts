@@ -91,6 +91,7 @@ export type Database = {
           student_id: string
           student_notes: string | null
           title: string
+          updated_at: string | null
         }
         Insert: {
           admin_id?: string | null
@@ -106,6 +107,7 @@ export type Database = {
           student_id: string
           student_notes?: string | null
           title: string
+          updated_at?: string | null
         }
         Update: {
           admin_id?: string | null
@@ -121,6 +123,7 @@ export type Database = {
           student_id?: string
           student_notes?: string | null
           title?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
