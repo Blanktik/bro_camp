@@ -28,7 +28,18 @@ export function StudentCallDialog({ open, onOpenChange, onCallStarted }: Student
     setHasSeenWarning(seen === 'true');
   }, []);
 
-  const handleCallTimeout = () => {
+  const handleCallTimeout = async () => {
+    if (!pendingCallId) return;
+    
+    try {
+      await supabase
+        .from('calls')
+        .update({ status: 'missed' })
+        .eq('id', pendingCallId);
+    } catch (error) {
+      console.error('Error updating call status:', error);
+    }
+    
     setPendingCallId(null);
     toast.error('No admin answered your call');
   };
@@ -120,7 +131,16 @@ export function StudentCallDialog({ open, onOpenChange, onCallStarted }: Student
           <div className="flex gap-3">
             <Button
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={async () => {
+                if (pendingCallId) {
+                  await supabase
+                    .from('calls')
+                    .update({ status: 'missed' })
+                    .eq('id', pendingCallId);
+                  setPendingCallId(null);
+                }
+                onOpenChange(false);
+              }}
               className="flex-1"
             >
               Cancel
