@@ -49,32 +49,39 @@ export function StudentCallDialog({ open, onOpenChange, onCallStarted }: Student
 
   useCallTimeout(pendingCallId || '', handleCallTimeout);
 
-  // Listen for when admin answers
+  // Listen for when admin answers (polling instead of realtime to avoid issues)
   useEffect(() => {
     if (!pendingCallId) return;
 
-    const channel = supabase
-      .channel(`call-status-${pendingCallId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'calls',
-          filter: `id=eq.${pendingCallId}`,
-        },
-        (payload: any) => {
-          if (payload.new.status === 'active' && payload.new.admin_id) {
-            onCallStarted(pendingCallId, title, payload.new.admin_id);
-            onOpenChange(false);
-            setTitle('');
-          }
-        }
-      )
-      .subscribe();
+    let isCancelled = false;
+
+    const checkStatus = async () => {
+      if (isCancelled) return;
+
+      const { data: call, error } = await supabase
+        .from('calls')
+        .select('status, admin_id')
+        .eq('id', pendingCallId)
+        .single();
+
+      if (error) {
+        console.error('Error checking call status:', error);
+        return;
+      }
+
+      if (call?.status === 'active' && call.admin_id) {
+        onCallStarted(pendingCallId, title, call.admin_id);
+        onOpenChange(false);
+        setTitle('');
+      } else {
+        setTimeout(checkStatus, 1000);
+      }
+    };
+
+    checkStatus();
 
     return () => {
-      supabase.removeChannel(channel);
+      isCancelled = true;
     };
   }, [pendingCallId, title, onCallStarted, onOpenChange]);
 
