@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Phone } from 'lucide-react';
+import { FileText, Phone, History } from 'lucide-react';
 import { StudentCallDialog } from '@/components/StudentCallDialog';
 import { CallInterface } from '@/components/CallInterface';
 
@@ -28,6 +28,7 @@ export default function StudentDashboard() {
   const menuItems = [
     { icon: FileText, label: 'Submit Complaint', path: '/student/complaints' },
     { icon: Phone, label: 'Call Admin', action: () => setShowCallDialog(true) },
+    { icon: History, label: 'Call History', path: '/student/call-history' },
   ];
 
   if (activeCallId && adminId) {

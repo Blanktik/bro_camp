@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Phone, AlertTriangle } from 'lucide-react';
 import { useCallTimeout } from '@/hooks/useCallTimeout';
+import { audioManager } from '@/utils/audioNotifications';
 
 interface StudentCallDialogProps {
   open: boolean;
@@ -37,6 +38,7 @@ export function StudentCallDialog({ open, onOpenChange, onCallStarted }: Student
         .from('calls')
         .update({ status: 'missed' })
         .eq('id', pendingCallId);
+      audioManager.play('callEnd');
     } catch (error) {
       console.error('Error updating call status:', error);
     }
@@ -84,6 +86,7 @@ export function StudentCallDialog({ open, onOpenChange, onCallStarted }: Student
 
     if (!title.trim()) {
       toast.error('Please enter a call title');
+      audioManager.play('error');
       return;
     }
 
@@ -94,6 +97,7 @@ export function StudentCallDialog({ open, onOpenChange, onCallStarted }: Student
       
       if (!user) {
         toast.error('You must be logged in to make a call');
+        audioManager.play('error');
         return;
       }
 
@@ -110,10 +114,12 @@ export function StudentCallDialog({ open, onOpenChange, onCallStarted }: Student
       if (error) throw error;
 
       setPendingCallId(call.id);
+      audioManager.play('outgoingCall');
       toast.success('Calling admins...');
     } catch (error) {
       console.error('Error creating call:', error);
       toast.error('Failed to start call');
+      audioManager.play('error');
     } finally {
       setIsCreating(false);
     }
@@ -165,6 +171,7 @@ export function StudentCallDialog({ open, onOpenChange, onCallStarted }: Student
                     .update({ status: 'missed' })
                     .eq('id', pendingCallId);
                   setPendingCallId(null);
+                  audioManager.play('callEnd');
                 }
                 onOpenChange(false);
               }}

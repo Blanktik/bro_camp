@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Phone, PhoneMissed, Download, Moon, ArrowLeft } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { CallInterface } from '@/components/CallInterface';
+import { audioManager } from '@/utils/audioNotifications';
 
 interface Call {
   id: string;
@@ -138,6 +139,7 @@ export default function AdminCalls() {
             .single();
 
           if (!settings?.dnd_mode) {
+            audioManager.play('incomingCall');
             toast(`Incoming call from ${profile?.full_name || 'Student'}`, {
               description: newCall.title,
               action: {
@@ -185,9 +187,11 @@ export default function AdminCalls() {
       if (error) throw error;
 
       setDndMode(enabled);
+      audioManager.play('notification');
       toast.success(enabled ? 'DND mode enabled' : 'DND mode disabled');
     } catch (error) {
       console.error('Error toggling DND:', error);
+      audioManager.play('error');
       toast.error('Failed to update DND mode');
     }
   };
@@ -211,6 +215,7 @@ export default function AdminCalls() {
 
       if (error) throw error;
 
+      audioManager.play('success');
       setActiveCallId(callId);
       setActiveCallTitle(title);
       setActiveCallStudent(studentName);
