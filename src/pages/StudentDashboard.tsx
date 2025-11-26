@@ -1,15 +1,45 @@
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { FileText } from 'lucide-react';
+import { FileText, Phone } from 'lucide-react';
+import { StudentCallDialog } from '@/components/StudentCallDialog';
+import { CallInterface } from '@/components/CallInterface';
 
 export default function StudentDashboard() {
   const { user, userRole, signOut } = useAuth();
   const navigate = useNavigate();
+  const [showCallDialog, setShowCallDialog] = useState(false);
+  const [activeCallId, setActiveCallId] = useState<string | null>(null);
+  const [activeCallTitle, setActiveCallTitle] = useState('');
+
+  const handleCallStarted = (callId: string, title: string) => {
+    setActiveCallId(callId);
+    setActiveCallTitle(title);
+  };
+
+  const handleCallEnded = () => {
+    setActiveCallId(null);
+    setActiveCallTitle('');
+  };
 
   const menuItems = [
     { icon: FileText, label: 'Submit Complaint', path: '/student/complaints' },
+    { icon: Phone, label: 'Call Admin', action: () => setShowCallDialog(true) },
   ];
+
+  if (activeCallId) {
+    return (
+      <CallInterface
+        callId={activeCallId}
+        isInitiator={true}
+        callTitle={activeCallTitle}
+        participantName="Admin"
+        onEndCall={handleCallEnded}
+        showVideoControls={true}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen animate-fade-in">
@@ -41,8 +71,8 @@ export default function StudentDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {menuItems.map((item, index) => (
               <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
+                key={item.path || index}
+                onClick={() => item.path ? navigate(item.path) : item.action?.()}
                 className="border border-gray-850 p-8 hover:border-white transition-all duration-300 text-left group hover-scale animate-fade-in-up"
                 style={{ animationDelay: `${(index + 3) * 100}ms` }}
               >
@@ -53,6 +83,12 @@ export default function StudentDashboard() {
           </div>
         </div>
       </main>
+
+      <StudentCallDialog
+        open={showCallDialog}
+        onOpenChange={setShowCallDialog}
+        onCallStarted={handleCallStarted}
+      />
     </div>
   );
 }
