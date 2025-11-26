@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentEvents from "./pages/StudentEvents";
 import StudentComplaints from "./pages/StudentComplaints";
+import StudentCallHistory from "./pages/StudentCallHistory";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminComplaints from "./pages/AdminComplaints";
 import AdminUsers from "./pages/AdminUsers";
@@ -106,6 +107,22 @@ function AnimatedRoutes() {
                 transition={pageTransition}
               >
                 <StudentComplaints />
+              </motion.div>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/call-history"
+          element={
+            <ProtectedRoute>
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+                transition={pageTransition}
+              >
+                <StudentCallHistory />
               </motion.div>
             </ProtectedRoute>
           }
