@@ -36,6 +36,7 @@ export default function AdminCalls() {
   const [activeCallId, setActiveCallId] = useState<string | null>(null);
   const [activeCallTitle, setActiveCallTitle] = useState('');
   const [activeCallStudent, setActiveCallStudent] = useState('');
+  const [activeStudentId, setActiveStudentId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -196,6 +197,9 @@ export default function AdminCalls() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const call = calls.find(c => c.id === callId);
+      if (!call) return;
+
       const { error } = await supabase
         .from('calls')
         .update({
@@ -210,6 +214,7 @@ export default function AdminCalls() {
       setActiveCallId(callId);
       setActiveCallTitle(title);
       setActiveCallStudent(studentName);
+      setActiveStudentId(call.student_id);
     } catch (error) {
       console.error('Error answering call:', error);
       toast.error('Failed to answer call');
@@ -310,11 +315,12 @@ export default function AdminCalls() {
     toast.success('Report downloaded');
   };
 
-  if (activeCallId) {
+  if (activeCallId && activeStudentId) {
     return (
       <CallInterface
         callId={activeCallId}
         isInitiator={false}
+        otherUserId={activeStudentId}
         callTitle={activeCallTitle}
         participantName={activeCallStudent}
         onEndCall={handleEndCall}
