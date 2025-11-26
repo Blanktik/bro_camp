@@ -6,10 +6,11 @@ import { toast } from 'sonner';
 interface UseWebRTCCallProps {
   callId: string;
   isInitiator: boolean;
+  otherUserId: string;
   onCallEnded?: () => void;
 }
 
-export const useWebRTCCall = ({ callId, isInitiator, onCallEnded }: UseWebRTCCallProps) => {
+export const useWebRTCCall = ({ callId, isInitiator, otherUserId, onCallEnded }: UseWebRTCCallProps) => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [isVideoEnabled, setIsVideoEnabled] = useState(false);
@@ -32,12 +33,12 @@ export const useWebRTCCall = ({ callId, isInitiator, onCallEnded }: UseWebRTCCal
       await supabase.from('call_signals').insert({
         call_id: callId,
         from_user_id: user.id,
-        to_user_id: user.id,
+        to_user_id: otherUserId,
         signal_type: 'ice-candidate',
         signal_data: candidate.toJSON() as any,
       });
     }
-  }, [callId]);
+  }, [callId, otherUserId]);
 
   const handleConnectionStateChange = useCallback((state: RTCPeerConnectionState) => {
     console.log('Connection state changed:', state);
@@ -103,20 +104,36 @@ export const useWebRTCCall = ({ callId, isInitiator, onCallEnded }: UseWebRTCCal
           )
           .subscribe();
 
-        // If initiator, create and send offer
+        // If initiator, wait for call to be active then create offer
         if (isInitiator) {
-          const offer = await webrtcRef.current.createOffer();
-          const { data: { user } } = await supabase.auth.getUser();
+          // Wait for call status to be 'active'
+          const checkCallStatus = async () => {
+            const { data: call } = await supabase
+              .from('calls')
+              .select('status')
+              .eq('id', callId)
+              .single();
+            
+            if (call?.status === 'active') {
+              await new Promise(resolve => setTimeout(resolve, 500));
+              const offer = await webrtcRef.current?.createOffer();
+              const { data: { user } } = await supabase.auth.getUser();
+              
+              if (offer && user) {
+                await supabase.from('call_signals').insert({
+                  call_id: callId,
+                  from_user_id: user.id,
+                  to_user_id: otherUserId,
+                  signal_type: 'offer',
+                  signal_data: offer as any,
+                });
+              }
+            } else {
+              setTimeout(checkCallStatus, 500);
+            }
+          };
           
-          if (user) {
-            await supabase.from('call_signals').insert({
-              call_id: callId,
-              from_user_id: user.id,
-              to_user_id: user.id,
-              signal_type: 'offer',
-              signal_data: offer as any,
-            });
-          }
+          checkCallStatus();
         }
       } catch (error) {
         console.error('Error initializing call:', error);
@@ -131,7 +148,7 @@ export const useWebRTCCall = ({ callId, isInitiator, onCallEnded }: UseWebRTCCal
       webrtcRef.current?.close();
       signalChannelRef.current?.unsubscribe();
     };
-  }, [callId, isInitiator, handleRemoteStream, handleIceCandidate, handleConnectionStateChange, onCallEnded]);
+  }, [callId, isInitiator, otherUserId, handleRemoteStream, handleIceCandidate, handleConnectionStateChange, onCallEnded]);
 
   const toggleVideo = useCallback(async () => {
     try {

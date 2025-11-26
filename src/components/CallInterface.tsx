@@ -6,6 +6,7 @@ import { useWebRTCCall } from '@/hooks/useWebRTCCall';
 interface CallInterfaceProps {
   callId: string;
   isInitiator: boolean;
+  otherUserId: string;
   callTitle: string;
   participantName: string;
   onEndCall: () => void;
@@ -15,6 +16,7 @@ interface CallInterfaceProps {
 export function CallInterface({
   callId,
   isInitiator,
+  otherUserId,
   callTitle,
   participantName,
   onEndCall,
@@ -35,6 +37,7 @@ export function CallInterface({
   } = useWebRTCCall({
     callId,
     isInitiator,
+    otherUserId,
     onCallEnded: onEndCall,
   });
 

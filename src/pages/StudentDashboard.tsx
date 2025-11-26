@@ -12,10 +12,12 @@ export default function StudentDashboard() {
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [activeCallId, setActiveCallId] = useState<string | null>(null);
   const [activeCallTitle, setActiveCallTitle] = useState('');
+  const [adminId, setAdminId] = useState<string>('');
 
-  const handleCallStarted = (callId: string, title: string) => {
+  const handleCallStarted = (callId: string, title: string, adminUserId: string) => {
     setActiveCallId(callId);
     setActiveCallTitle(title);
+    setAdminId(adminUserId);
   };
 
   const handleCallEnded = () => {
@@ -28,11 +30,12 @@ export default function StudentDashboard() {
     { icon: Phone, label: 'Call Admin', action: () => setShowCallDialog(true) },
   ];
 
-  if (activeCallId) {
+  if (activeCallId && adminId) {
     return (
       <CallInterface
         callId={activeCallId}
         isInitiator={true}
+        otherUserId={adminId}
         callTitle={activeCallTitle}
         participantName="Admin"
         onEndCall={handleCallEnded}

@@ -12,7 +12,7 @@ import { useCallTimeout } from '@/hooks/useCallTimeout';
 interface StudentCallDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCallStarted: (callId: string, title: string) => void;
+  onCallStarted: (callId: string, title: string, adminId: string) => void;
 }
 
 export function StudentCallDialog({ open, onOpenChange, onCallStarted }: StudentCallDialogProps) {
@@ -21,6 +21,7 @@ export function StudentCallDialog({ open, onOpenChange, onCallStarted }: Student
   const [hasSeenWarning, setHasSeenWarning] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [pendingCallId, setPendingCallId] = useState<string | null>(null);
+  const [pendingAdminId, setPendingAdminId] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if user has seen warning before
@@ -45,6 +46,35 @@ export function StudentCallDialog({ open, onOpenChange, onCallStarted }: Student
   };
 
   useCallTimeout(pendingCallId || '', handleCallTimeout);
+
+  // Listen for when admin answers
+  useEffect(() => {
+    if (!pendingCallId) return;
+
+    const channel = supabase
+      .channel(`call-status-${pendingCallId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'calls',
+          filter: `id=eq.${pendingCallId}`,
+        },
+        (payload: any) => {
+          if (payload.new.status === 'active' && payload.new.admin_id) {
+            onCallStarted(pendingCallId, title, payload.new.admin_id);
+            onOpenChange(false);
+            setTitle('');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [pendingCallId, title, onCallStarted, onOpenChange]);
 
   const handleStartCall = async () => {
     if (!hasSeenWarning) {
@@ -81,9 +111,6 @@ export function StudentCallDialog({ open, onOpenChange, onCallStarted }: Student
 
       setPendingCallId(call.id);
       toast.success('Calling admins...');
-      onCallStarted(call.id, title);
-      onOpenChange(false);
-      setTitle('');
     } catch (error) {
       console.error('Error creating call:', error);
       toast.error('Failed to start call');
