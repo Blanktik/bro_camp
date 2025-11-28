@@ -1,7 +1,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { FileText } from 'lucide-react';
+import { FileText, User } from 'lucide-react';
 import ElevenLabsWidget from '@/components/ElevenLabsWidget';
 
 export default function StudentDashboard() {
@@ -10,6 +10,7 @@ export default function StudentDashboard() {
 
   const menuItems = [
     { icon: FileText, label: 'Submit Complaint', path: '/student/complaints' },
+    { icon: User, label: 'My Profile', path: '/student/profile' },
   ];
 
   return (

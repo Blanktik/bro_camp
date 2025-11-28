@@ -1,1 +1,4 @@
 project_id = "malgbgcgcddvkoaldsvs"
+
+[functions.submit-complaint-webhook]
+verify_jwt = false
