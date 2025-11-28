@@ -5,19 +5,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { ModerationOverlay } from "@/components/ModerationOverlay";
 import { AnimatePresence, motion } from "framer-motion";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentEvents from "./pages/StudentEvents";
 import StudentComplaints from "./pages/StudentComplaints";
-import StudentCallHistory from "./pages/StudentCallHistory";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminComplaints from "./pages/AdminComplaints";
 import AdminUsers from "./pages/AdminUsers";
-import AdminModeration from "./pages/AdminModeration";
-import AdminCalls from "./pages/AdminCalls";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -111,22 +107,6 @@ function AnimatedRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/student/call-history"
-          element={
-            <ProtectedRoute>
-              <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                transition={pageTransition}
-              >
-                <StudentCallHistory />
-              </motion.div>
-            </ProtectedRoute>
-          }
-        />
         
         {/* Admin Routes */}
         <Route
@@ -177,38 +157,6 @@ function AnimatedRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/admin/moderation"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                transition={pageTransition}
-              >
-                <AdminModeration />
-              </motion.div>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/calls"
-          element={
-            <ProtectedRoute requiredRole="admin">
-              <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                transition={pageTransition}
-              >
-                <AdminCalls />
-              </motion.div>
-            </ProtectedRoute>
-          }
-        />
         
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={
@@ -234,9 +182,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <ModerationOverlay>
-            <AnimatedRoutes />
-          </ModerationOverlay>
+          <AnimatedRoutes />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

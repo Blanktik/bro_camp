@@ -1,49 +1,15 @@
-import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Phone, History } from 'lucide-react';
-import { StudentCallDialog } from '@/components/StudentCallDialog';
-import { CallInterface } from '@/components/CallInterface';
+import { FileText } from 'lucide-react';
 
 export default function StudentDashboard() {
   const { user, userRole, signOut } = useAuth();
   const navigate = useNavigate();
-  const [showCallDialog, setShowCallDialog] = useState(false);
-  const [activeCallId, setActiveCallId] = useState<string | null>(null);
-  const [activeCallTitle, setActiveCallTitle] = useState('');
-  const [adminId, setAdminId] = useState<string>('');
-
-  const handleCallStarted = (callId: string, title: string, adminUserId: string) => {
-    setActiveCallId(callId);
-    setActiveCallTitle(title);
-    setAdminId(adminUserId);
-  };
-
-  const handleCallEnded = () => {
-    setActiveCallId(null);
-    setActiveCallTitle('');
-  };
 
   const menuItems = [
     { icon: FileText, label: 'Submit Complaint', path: '/student/complaints' },
-    { icon: Phone, label: 'Call Admin', action: () => setShowCallDialog(true) },
-    { icon: History, label: 'Call History', path: '/student/call-history' },
   ];
-
-  if (activeCallId && adminId) {
-    return (
-      <CallInterface
-        callId={activeCallId}
-        isInitiator={true}
-        otherUserId={adminId}
-        callTitle={activeCallTitle}
-        participantName="Admin"
-        onEndCall={handleCallEnded}
-        showVideoControls={true}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen animate-fade-in">
@@ -75,8 +41,8 @@ export default function StudentDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {menuItems.map((item, index) => (
               <button
-                key={item.path || index}
-                onClick={() => item.path ? navigate(item.path) : item.action?.()}
+                key={item.path}
+                onClick={() => navigate(item.path)}
                 className="border border-gray-850 p-8 hover:border-white transition-all duration-300 text-left group hover-scale animate-fade-in-up"
                 style={{ animationDelay: `${(index + 3) * 100}ms` }}
               >
@@ -87,12 +53,6 @@ export default function StudentDashboard() {
           </div>
         </div>
       </main>
-
-      <StudentCallDialog
-        open={showCallDialog}
-        onOpenChange={setShowCallDialog}
-        onCallStarted={handleCallStarted}
-      />
     </div>
   );
 }
