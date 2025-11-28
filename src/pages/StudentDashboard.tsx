@@ -2,6 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { FileText } from 'lucide-react';
+import ElevenLabsWidget from '@/components/ElevenLabsWidget';
 
 export default function StudentDashboard() {
   const { user, userRole, signOut } = useAuth();
@@ -53,6 +54,7 @@ export default function StudentDashboard() {
           </div>
         </div>
       </main>
+      <ElevenLabsWidget />
     </div>
   );
 }
