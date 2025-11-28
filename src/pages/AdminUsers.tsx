@@ -4,11 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ArrowLeft, ShieldCheck, ShieldX, AlertTriangle, Ban, Clock, X } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, ShieldX } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,9 +24,6 @@ interface User {
   department: string | null;
   year: string | null;
   roles: { role: string }[];
-  warningCount?: number;
-  isBanned?: boolean;
-  isTimedOut?: boolean;
 }
 
 export default function AdminUsers() {
@@ -38,9 +32,7 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [actionType, setActionType] = useState<'promote' | 'demote' | 'warning' | 'timeout' | 'ban' | 'revoke' | null>(null);
-  const [moderationReason, setModerationReason] = useState('');
-  const [timeoutDuration, setTimeoutDuration] = useState({ value: 7, unit: 'days' as 'hours' | 'days' | 'minutes' });
+  const [actionType, setActionType] = useState<'promote' | 'demote' | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -66,22 +58,9 @@ export default function AdminUsers() {
 
       if (rolesError) throw rolesError;
 
-      // Fetch moderation data
-      const { data: moderationData } = await supabase
-        .from('user_moderation')
-        .select('user_id, moderation_type, is_active, expires_at');
-
-      // Combine users with their roles and moderation info
+      // Combine users with their roles
       const combinedUsers = profilesData.map((profile) => {
         const userRoles = rolesData?.filter((r) => r.user_id === profile.id) || [];
-        const userModerations = moderationData?.filter((m) => m.user_id === profile.id && m.is_active) || [];
-        
-        const warningCount = userModerations.filter(m => m.moderation_type === 'warning').length;
-        const isBanned = userModerations.some(m => m.moderation_type === 'ban');
-        const isTimedOut = userModerations.some(m => 
-          m.moderation_type === 'timeout' && 
-          (!m.expires_at || new Date(m.expires_at) > new Date())
-        );
         
         return {
           id: profile.id,
@@ -90,9 +69,6 @@ export default function AdminUsers() {
           department: profile.department,
           year: profile.year,
           roles: userRoles,
-          warningCount,
-          isBanned,
-          isTimedOut,
         };
       });
 
@@ -108,8 +84,6 @@ export default function AdminUsers() {
     if (!selectedUser) return;
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
       if (actionType === 'promote') {
         const { error } = await supabase.from('user_roles').insert({
           user_id: selectedUser.id,
@@ -125,47 +99,8 @@ export default function AdminUsers() {
           .eq('role', 'admin');
         if (error) throw error;
         toast.success(`${selectedUser.full_name} demoted to Student`);
-      } else if (actionType === 'warning' || actionType === 'timeout' || actionType === 'ban') {
-        if (!moderationReason.trim()) {
-          toast.error('Please provide a reason for this action');
-          return;
-        }
-
-        let expiresAt = null;
-        if (actionType === 'timeout') {
-          const multiplier = timeoutDuration.unit === 'hours' ? 60 * 60 * 1000 :
-                            timeoutDuration.unit === 'minutes' ? 60 * 1000 :
-                            24 * 60 * 60 * 1000; // days
-          expiresAt = new Date(Date.now() + timeoutDuration.value * multiplier).toISOString();
-        }
-
-        const { error } = await supabase.from('user_moderation').insert({
-          user_id: selectedUser.id,
-          moderation_type: actionType,
-          reason: moderationReason,
-          issued_by: user?.id,
-          expires_at: expiresAt,
-          is_active: true,
-        });
-        
-        if (error) throw error;
-        
-        const actionLabels = { warning: 'Warning issued', timeout: 'Timeout applied', ban: 'User banned' };
-        toast.success(actionLabels[actionType]);
-      } else if (actionType === 'revoke') {
-        // Revoke all active moderations for this user
-        const { error } = await supabase
-          .from('user_moderation')
-          .update({ is_active: false })
-          .eq('user_id', selectedUser.id)
-          .eq('is_active', true);
-        
-        if (error) throw error;
-        toast.success(`All moderation actions revoked for ${selectedUser.full_name}`);
       }
 
-      setModerationReason('');
-      setTimeoutDuration({ value: 7, unit: 'days' });
       fetchUsers();
     } catch (error: any) {
       toast.error(error.message);
@@ -220,12 +155,11 @@ export default function AdminUsers() {
           </div>
 
           <div className="border border-gray-850">
-            <div className="grid grid-cols-6 gap-4 p-4 border-b border-gray-850 text-xs text-gray-500 font-mono">
+            <div className="grid grid-cols-5 gap-4 p-4 border-b border-gray-850 text-xs text-gray-500 font-mono">
               <div>NAME</div>
               <div>EMAIL</div>
               <div>DEPT</div>
-              <div>ROLE / STATUS</div>
-              <div>WARNINGS</div>
+              <div>ROLE</div>
               <div className="text-right">ACTIONS</div>
             </div>
 
@@ -236,42 +170,20 @@ export default function AdminUsers() {
               return (
                 <div
                   key={user.id}
-                  className="grid grid-cols-6 gap-4 p-4 border-b border-gray-850 hover:bg-gray-950 transition-colors items-center"
+                  className="grid grid-cols-5 gap-4 p-4 border-b border-gray-850 hover:bg-gray-950 transition-colors items-center"
                 >
                   <div className="font-medium">{user.full_name}</div>
                   <div className="text-sm text-gray-400">{user.email}</div>
                   <div className="text-sm text-gray-400">{user.department || 'N/A'}</div>
-                  <div className="flex flex-col gap-1">
+                  <div>
                     <Badge
                       variant={isAdmin ? 'default' : 'outline'}
                       className="text-xs font-mono w-fit"
                     >
                       {isSuperAdmin ? 'SUPER_ADMIN' : isAdmin ? 'ADMIN' : 'STUDENT'}
                     </Badge>
-                    {user.isBanned && (
-                      <Badge variant="destructive" className="text-xs w-fit">
-                        <Ban className="w-3 h-3 mr-1" />
-                        BANNED
-                      </Badge>
-                    )}
-                    {user.isTimedOut && (
-                      <Badge variant="outline" className="text-xs w-fit border-yellow-600 text-yellow-600">
-                        <Clock className="w-3 h-3 mr-1" />
-                        TIMEOUT
-                      </Badge>
-                    )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    {user.warningCount && user.warningCount > 0 ? (
-                      <Badge variant="outline" className="text-xs border-orange-600 text-orange-600">
-                        <AlertTriangle className="w-3 h-3 mr-1" />
-                        {user.warningCount}
-                      </Badge>
-                    ) : (
-                      <span className="text-xs text-gray-600">None</span>
-                    )}
-                  </div>
-                  <div className="flex gap-1 justify-end flex-wrap">
+                  <div className="flex gap-1 justify-end">
                     {!isSuperAdmin && (
                       <>
                         {!isAdmin ? (
@@ -301,60 +213,6 @@ export default function AdminUsers() {
                             DEMOTE
                           </Button>
                         )}
-                        <Button
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setActionType('warning');
-                          }}
-                          size="sm"
-                          variant="outline"
-                          className="border-gray-850 text-orange-400 hover:text-orange-300 hover:border-orange-400 text-xs h-7"
-                        >
-                          <AlertTriangle className="w-3 h-3 mr-1" />
-                          WARN
-                        </Button>
-                        {!user.isTimedOut && (
-                          <Button
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setActionType('timeout');
-                            }}
-                            size="sm"
-                            variant="outline"
-                            className="border-gray-850 text-yellow-400 hover:text-yellow-300 hover:border-yellow-400 text-xs h-7"
-                          >
-                            <Clock className="w-3 h-3 mr-1" />
-                            TIMEOUT
-                          </Button>
-                        )}
-                        {!user.isBanned && (
-                          <Button
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setActionType('ban');
-                            }}
-                            size="sm"
-                            variant="outline"
-                            className="border-gray-850 text-red-400 hover:text-red-300 hover:border-red-400 text-xs h-7"
-                          >
-                            <Ban className="w-3 h-3 mr-1" />
-                            BAN
-                          </Button>
-                        )}
-                        {(user.warningCount && user.warningCount > 0) || user.isBanned || user.isTimedOut ? (
-                          <Button
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setActionType('revoke');
-                            }}
-                            size="sm"
-                            variant="outline"
-                            className="border-gray-850 text-green-400 hover:text-green-300 hover:border-green-400 text-xs h-7"
-                          >
-                            <X className="w-3 h-3 mr-1" />
-                            REVOKE
-                          </Button>
-                        ) : null}
                       </>
                     )}
                   </div>
@@ -365,99 +223,28 @@ export default function AdminUsers() {
         </div>
       </main>
 
-      <AlertDialog open={!!selectedUser && !!actionType} onOpenChange={() => {
-        setSelectedUser(null);
-        setModerationReason('');
-        setTimeoutDuration({ value: 7, unit: 'days' });
-      }}>
+      <AlertDialog open={!!selectedUser && !!actionType} onOpenChange={() => setSelectedUser(null)}>
         <AlertDialogContent className="bg-black border border-gray-850">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-bold tracking-tight">
               {actionType === 'promote' && 'Promote to Admin'}
               {actionType === 'demote' && 'Demote to Student'}
-              {actionType === 'warning' && 'Issue Warning'}
-              {actionType === 'timeout' && 'Timeout User'}
-              {actionType === 'ban' && 'Ban User'}
-              {actionType === 'revoke' && 'Revoke All Moderation Actions'}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-400">
-              {actionType === 'promote' && `Grant admin privileges to ${selectedUser?.full_name}? They will be able to manage complaints and moderate content.`}
+              {actionType === 'promote' && `Grant admin privileges to ${selectedUser?.full_name}? They will be able to manage complaints.`}
               {actionType === 'demote' && `Remove admin privileges from ${selectedUser?.full_name}? They will return to student access only.`}
-              {actionType === 'warning' && `Issue a formal warning to ${selectedUser?.full_name}. This will be recorded in their moderation history.`}
-              {actionType === 'timeout' && `Temporarily restrict ${selectedUser?.full_name}'s access. They will not be able to submit complaints during this period.`}
-              {actionType === 'ban' && `Permanently ban ${selectedUser?.full_name} from the platform. This action should only be used for serious violations.`}
-              {actionType === 'revoke' && `Remove all active warnings, timeouts, and bans for ${selectedUser?.full_name}? This will restore their full account access.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          {(actionType === 'warning' || actionType === 'timeout' || actionType === 'ban') && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="moderation-reason" className="text-xs tracking-wider text-gray-400">
-                  REASON *
-                </Label>
-                <Textarea
-                  id="moderation-reason"
-                  value={moderationReason}
-                  onChange={(e) => setModerationReason(e.target.value)}
-                  placeholder="Provide a clear reason for this action..."
-                  className="bg-transparent border-gray-850 focus:border-white resize-none"
-                  rows={3}
-                />
-              </div>
-
-              {actionType === 'timeout' && (
-                <div className="space-y-2">
-                  <Label htmlFor="timeout-duration" className="text-xs tracking-wider text-gray-400">
-                    DURATION
-                  </Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="timeout-duration"
-                      type="number"
-                      min="1"
-                      max="365"
-                      value={timeoutDuration.value}
-                      onChange={(e) => setTimeoutDuration({ ...timeoutDuration, value: parseInt(e.target.value) || 1 })}
-                      className="bg-transparent border-gray-850 focus:border-white flex-1"
-                    />
-                    <select
-                      value={timeoutDuration.unit}
-                      onChange={(e) => setTimeoutDuration({ ...timeoutDuration, unit: e.target.value as 'hours' | 'days' | 'minutes' })}
-                      className="bg-black border border-gray-850 focus:border-white px-3 py-2 text-sm"
-                    >
-                      <option value="minutes">Minutes</option>
-                      <option value="hours">Hours</option>
-                      <option value="days">Days</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
           <AlertDialogFooter>
-            <AlertDialogCancel 
-              className="border-gray-850"
-              onClick={() => {
-                setModerationReason('');
-                setTimeoutDuration({ value: 7, unit: 'days' });
-              }}
-            >
-              CANCEL
+            <AlertDialogCancel className="border-gray-850 text-gray-400 hover:text-white hover:border-white bg-transparent">
+              Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRoleChange}
-              disabled={(actionType === 'warning' || actionType === 'timeout' || actionType === 'ban') && !moderationReason.trim()}
-              className={`${
-                actionType === 'ban' ? 'bg-red-600 hover:bg-red-700' :
-                actionType === 'timeout' ? 'bg-yellow-600 hover:bg-yellow-700' :
-                actionType === 'warning' ? 'bg-orange-600 hover:bg-orange-700' :
-                actionType === 'revoke' ? 'bg-green-600 hover:bg-green-700' :
-                'bg-white text-black hover:bg-gray-200'
-              }`}
+              className={actionType === 'demote' ? 'bg-red-600 hover:bg-red-700 border-red-600' : ''}
             >
-              CONFIRM
+              Confirm
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
