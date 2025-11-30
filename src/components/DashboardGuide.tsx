@@ -52,7 +52,7 @@ export function DashboardGuide({ steps, storageKey, dashboardName, onGuideStateC
         const windowHeight = window.innerHeight;
         const windowWidth = window.innerWidth;
         const tooltipWidth = 400;
-        const tooltipHeight = 200;
+        const tooltipHeight = 280; // Increased to account for actual content height
         const padding = 20;
 
         let top = 0;
