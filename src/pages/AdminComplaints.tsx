@@ -12,7 +12,23 @@ import { toast } from 'sonner';
 import { ArrowLeft, UserX, Bell, CheckCircle2, Download, ArrowUpCircle, HelpCircle, Copy, Volume2, Search, Mic, X } from 'lucide-react';
 import { VoicePlayer } from '@/components/VoicePlayer';
 import { VoiceRecorder } from '@/components/VoiceRecorder';
+import { StudentProfilePopover } from '@/components/StudentProfilePopover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+
+interface StudentProfile {
+  id: string;
+  full_name: string;
+  email: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  department: string | null;
+  year: string | null;
+  social_twitter: string | null;
+  social_instagram: string | null;
+  social_linkedin: string | null;
+  social_github: string | null;
+  created_at: string;
+}
 
 interface Complaint {
   id: string;
@@ -22,7 +38,7 @@ interface Complaint {
   status: string;
   admin_response: string | null;
   created_at: string;
-  profiles: { full_name: string; email: string } | null;
+  profiles: StudentProfile | null;
   media_urls: string[] | null;
   viewed_at: string | null;
   edited_at: string | null;
@@ -114,14 +130,14 @@ export default function AdminComplaints() {
 
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, full_name, email')
+        .select('id, full_name, email, avatar_url, bio, department, year, social_twitter, social_instagram, social_linkedin, social_github, created_at')
         .in('id', allProfileIds);
 
       // Merge data and hide identity for anonymous complaints
       const complaints = complaintsData.map(complaint => ({
         ...complaint,
         profiles: complaint.is_anonymous
-          ? { full_name: 'Anonymous', email: '' }
+          ? null
           : (profilesData?.find(p => p.id === complaint.user_id) || null),
         admin_profile: complaint.admin_id 
           ? profilesData?.find(p => p.id === complaint.admin_id) 
@@ -678,7 +694,7 @@ export default function AdminComplaints() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-3 mb-3">
                         <h3 className="font-bold text-lg">{complaint.title}</h3>
                         <Badge
                           className={`text-xs tracking-wider ${
@@ -693,27 +709,25 @@ export default function AdminComplaints() {
                           <span className="text-xs text-gray-500 tracking-wider">EDITED</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 text-sm text-gray-400">
-                        <span className="flex items-center gap-1">
-                          {complaint.is_anonymous && <UserX className="w-4 h-4" />}
-                          {complaint.is_anonymous
-                            ? 'Anonymous'
-                            : (complaint.profiles?.full_name || 'Unknown User')}
-                        </span>
-                        {!complaint.is_anonymous && complaint.profiles?.email && (
-                          <>
-                            <span>•</span>
-                            <span>{complaint.profiles.email}</span>
-                          </>
-                        )}
-                        <span>•</span>
-                        <span>
-                          {new Date(complaint.created_at).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </span>
+                      
+                      {/* Student Profile Section */}
+                      <div className="flex items-center gap-4 mb-3">
+                        <StudentProfilePopover 
+                          profile={complaint.profiles} 
+                          isAnonymous={complaint.is_anonymous}
+                        />
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span>•</span>
+                          <span>
+                            {new Date(complaint.created_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
