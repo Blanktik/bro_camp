@@ -28,6 +28,7 @@ interface Complaint {
   appeal_status: string | null;
   appeal_submitted_at: string | null;
   appeal_response: string | null;
+  appeal_reviewed_at: string | null;
 }
 
 const guideSteps = [
@@ -393,6 +394,32 @@ export default function AdminModeration() {
                   <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
                     {complaint.description}
                   </p>
+
+                  {/* Media Display */}
+                  {complaint.media_urls && complaint.media_urls.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-muted-foreground tracking-wider font-bold">ATTACHMENTS</span>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {complaint.media_urls.map((url, index) => (
+                          <a
+                            key={index}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-24 h-24 border border-border hover:border-foreground transition-colors overflow-hidden"
+                          >
+                            {url.match(/\.(mp4|mov|webm|avi)$/i) ? (
+                              <video src={url} className="w-full h-full object-cover" />
+                            ) : (
+                              <img src={url} alt={`Attachment ${index + 1}`} className="w-full h-full object-cover" />
+                            )}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {complaint.flagged && complaint.flagged_reason && (
                     <div className="mb-4 p-4 border border-red-600/50 bg-red-600/10">
