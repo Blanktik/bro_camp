@@ -4,10 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Camera, Loader2, Save, Twitter, Instagram, Linkedin, Github } from 'lucide-react';
 import { toast } from 'sonner';
 
 const DEPARTMENTS = [
@@ -36,6 +37,11 @@ interface Profile {
   department: string | null;
   year: string | null;
   avatar_url: string | null;
+  bio: string | null;
+  social_twitter: string | null;
+  social_instagram: string | null;
+  social_linkedin: string | null;
+  social_github: string | null;
 }
 
 export default function StudentProfile() {
@@ -50,6 +56,11 @@ export default function StudentProfile() {
     department: null,
     year: null,
     avatar_url: null,
+    bio: null,
+    social_twitter: null,
+    social_instagram: null,
+    social_linkedin: null,
+    social_github: null,
   });
 
   useEffect(() => {
@@ -62,7 +73,7 @@ export default function StudentProfile() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('full_name, email, department, year, avatar_url')
+        .select('full_name, email, department, year, avatar_url, bio, social_twitter, social_instagram, social_linkedin, social_github')
         .eq('id', user!.id)
         .single();
 
@@ -146,6 +157,11 @@ export default function StudentProfile() {
           full_name: profile.full_name,
           department: profile.department,
           year: profile.year,
+          bio: profile.bio,
+          social_twitter: profile.social_twitter,
+          social_instagram: profile.social_instagram,
+          social_linkedin: profile.social_linkedin,
+          social_github: profile.social_github,
         })
         .eq('id', user!.id);
 
@@ -296,6 +312,67 @@ export default function StudentProfile() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Bio */}
+            <div className="space-y-2">
+              <Label htmlFor="bio" className="text-gray-400 text-sm tracking-wider">BIO</Label>
+              <Textarea
+                id="bio"
+                value={profile.bio || ''}
+                onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
+                className="bg-gray-900/50 border-gray-850 focus:border-white transition-colors min-h-[100px] resize-none"
+                placeholder="Tell us about yourself..."
+                maxLength={300}
+              />
+              <p className="text-xs text-gray-600">{(profile.bio?.length || 0)}/300 characters</p>
+            </div>
+
+            {/* Social Links */}
+            <div className="space-y-4">
+              <Label className="text-gray-400 text-sm tracking-wider">SOCIAL LINKS</Label>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="relative">
+                  <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <Input
+                    value={profile.social_twitter || ''}
+                    onChange={(e) => setProfile(prev => ({ ...prev, social_twitter: e.target.value }))}
+                    className="bg-gray-900/50 border-gray-850 focus:border-white transition-colors pl-10"
+                    placeholder="twitter username"
+                  />
+                </div>
+                
+                <div className="relative">
+                  <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <Input
+                    value={profile.social_instagram || ''}
+                    onChange={(e) => setProfile(prev => ({ ...prev, social_instagram: e.target.value }))}
+                    className="bg-gray-900/50 border-gray-850 focus:border-white transition-colors pl-10"
+                    placeholder="instagram username"
+                  />
+                </div>
+                
+                <div className="relative">
+                  <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <Input
+                    value={profile.social_linkedin || ''}
+                    onChange={(e) => setProfile(prev => ({ ...prev, social_linkedin: e.target.value }))}
+                    className="bg-gray-900/50 border-gray-850 focus:border-white transition-colors pl-10"
+                    placeholder="linkedin username"
+                  />
+                </div>
+                
+                <div className="relative">
+                  <Github className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <Input
+                    value={profile.social_github || ''}
+                    onChange={(e) => setProfile(prev => ({ ...prev, social_github: e.target.value }))}
+                    className="bg-gray-900/50 border-gray-850 focus:border-white transition-colors pl-10"
+                    placeholder="github username"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

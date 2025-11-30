@@ -307,34 +307,49 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string
           department: string | null
           email: string | null
           full_name: string
           id: string
           interests: string[] | null
+          social_github: string | null
+          social_instagram: string | null
+          social_linkedin: string | null
+          social_twitter: string | null
           updated_at: string
           year: string | null
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
           full_name: string
           id: string
           interests?: string[] | null
+          social_github?: string | null
+          social_instagram?: string | null
+          social_linkedin?: string | null
+          social_twitter?: string | null
           updated_at?: string
           year?: string | null
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
           full_name?: string
           id?: string
           interests?: string[] | null
+          social_github?: string | null
+          social_instagram?: string | null
+          social_linkedin?: string | null
+          social_twitter?: string | null
           updated_at?: string
           year?: string | null
         }
