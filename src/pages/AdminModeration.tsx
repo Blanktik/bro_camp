@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { ArrowLeft, Flag, Search, AlertTriangle, CheckCircle, Trash2, Eye } from 'lucide-react';
+import { ArrowLeft, Flag, Search, AlertTriangle, CheckCircle, Trash2, Eye, MessageSquare } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { DashboardGuide } from '@/components/DashboardGuide';
 
@@ -24,6 +24,10 @@ interface Complaint {
   profiles: { full_name: string; email: string } | null;
   voice_note_url: string | null;
   media_urls: string[] | null;
+  appeal_text: string | null;
+  appeal_status: string | null;
+  appeal_submitted_at: string | null;
+  appeal_response: string | null;
 }
 
 const guideSteps = [
@@ -65,6 +69,11 @@ export default function AdminModeration() {
   // Delete dialog
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteComplaintId, setDeleteComplaintId] = useState<string | null>(null);
+  
+  // Appeal dialog
+  const [showAppealDialog, setShowAppealDialog] = useState(false);
+  const [appealResponse, setAppealResponse] = useState('');
+  const [selectedAppeal, setSelectedAppeal] = useState<Complaint | null>(null);
 
   useEffect(() => {
     fetchComplaints();
@@ -194,6 +203,44 @@ export default function AdminModeration() {
       toast.success('Complaint permanently deleted');
       setShowDeleteDialog(false);
       setDeleteComplaintId(null);
+      fetchComplaints();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleAppealReview = async (approved: boolean) => {
+    if (!selectedAppeal) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const updateData: any = {
+        appeal_status: approved ? 'approved' : 'rejected',
+        appeal_reviewed_at: new Date().toISOString(),
+        appeal_reviewed_by: user?.id,
+        appeal_response: appealResponse.trim() || (approved ? 'Appeal approved' : 'Appeal rejected'),
+      };
+
+      // If approved, unflag the complaint
+      if (approved) {
+        updateData.flagged = false;
+        updateData.flagged_reason = null;
+        updateData.flagged_at = null;
+        updateData.flagged_by = null;
+      }
+
+      const { error } = await supabase
+        .from('complaints')
+        .update(updateData)
+        .eq('id', selectedAppeal.id);
+
+      if (error) throw error;
+
+      toast.success(`Appeal ${approved ? 'approved' : 'rejected'}`);
+      setShowAppealDialog(false);
+      setAppealResponse('');
+      setSelectedAppeal(null);
       fetchComplaints();
     } catch (error: any) {
       toast.error(error.message);
@@ -359,11 +406,56 @@ export default function AdminModeration() {
                           Flagged on {new Date(complaint.flagged_at).toLocaleString()}
                         </p>
                       )}
+                      
+                      {/* Appeal Section */}
+                      {complaint.appeal_text && (
+                        <div className="mt-4 pt-4 border-t border-red-600/30">
+                          <div className="flex items-center gap-2 mb-2">
+                            <MessageSquare className="w-4 h-4 text-yellow-500" />
+                            <span className="text-xs text-yellow-500 tracking-wider font-bold">STUDENT APPEAL</span>
+                            {complaint.appeal_status && (
+                              <Badge className={`text-xs ml-2 ${
+                                complaint.appeal_status === 'pending' ? 'bg-yellow-600' :
+                                complaint.appeal_status === 'approved' ? 'bg-green-600' :
+                                'bg-red-700'
+                              }`}>
+                                {complaint.appeal_status.toUpperCase()}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-yellow-300/80">{complaint.appeal_text}</p>
+                          {complaint.appeal_submitted_at && (
+                            <p className="text-xs text-yellow-500/60 mt-2">
+                              Submitted on {new Date(complaint.appeal_submitted_at).toLocaleString()}
+                            </p>
+                          )}
+                          {complaint.appeal_status === 'pending' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedAppeal(complaint);
+                                setShowAppealDialog(true);
+                              }}
+                              className="mt-3 border-yellow-600 text-yellow-500 hover:bg-yellow-600 hover:text-white text-xs"
+                            >
+                              <MessageSquare className="w-3 h-3 mr-1" />
+                              REVIEW APPEAL
+                            </Button>
+                          )}
+                          {complaint.appeal_response && (
+                            <div className="mt-3 p-3 bg-red-950/50 border border-red-800/50">
+                              <p className="text-xs text-red-400 font-bold mb-1">Admin Response:</p>
+                              <p className="text-sm text-red-300">{complaint.appeal_response}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* Actions */}
-                  <div className="flex gap-2 pt-4 border-t border-border">
+                  <div className="flex gap-2 pt-4 border-t border-border flex-wrap">
                     {viewFilter === 'deleted' ? (
                       <Button
                         size="sm"
@@ -377,29 +469,45 @@ export default function AdminModeration() {
                         <Trash2 className="w-3 h-3 mr-1" />
                         DELETE PERMANENTLY
                       </Button>
-                    ) : complaint.flagged ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleUnflagComplaint(complaint.id)}
-                        className="border-border text-muted-foreground hover:text-foreground text-xs"
-                      >
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        UNFLAG
-                      </Button>
                     ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedComplaintId(complaint.id);
-                          setShowFlagDialog(true);
-                        }}
-                        className="border-border text-muted-foreground hover:border-red-600 hover:text-red-500 text-xs"
-                      >
-                        <Flag className="w-3 h-3 mr-1" />
-                        FLAG
-                      </Button>
+                      <>
+                        {complaint.flagged ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleUnflagComplaint(complaint.id)}
+                            className="border-border text-muted-foreground hover:text-foreground text-xs"
+                          >
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            UNFLAG
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedComplaintId(complaint.id);
+                              setShowFlagDialog(true);
+                            }}
+                            className="border-border text-muted-foreground hover:border-red-600 hover:text-red-500 text-xs"
+                          >
+                            <Flag className="w-3 h-3 mr-1" />
+                            FLAG
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setDeleteComplaintId(complaint.id);
+                            setShowDeleteDialog(true);
+                          }}
+                          className="border-red-600 text-red-500 hover:bg-red-600 hover:text-white text-xs"
+                        >
+                          <Trash2 className="w-3 h-3 mr-1" />
+                          DELETE
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -473,6 +581,71 @@ export default function AdminModeration() {
               className="bg-red-600 text-white hover:bg-red-700"
             >
               DELETE PERMANENTLY
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Appeal Review Dialog */}
+      <Dialog open={showAppealDialog} onOpenChange={setShowAppealDialog}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="tracking-tight">Review Appeal</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Review the student's appeal and decide whether to approve or reject it.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedAppeal && (
+            <div className="space-y-4">
+              <div className="p-3 bg-secondary border border-border">
+                <p className="text-xs text-muted-foreground mb-1">Complaint:</p>
+                <p className="text-sm font-medium">{selectedAppeal.title}</p>
+              </div>
+              
+              <div className="p-3 bg-red-600/10 border border-red-600/30">
+                <p className="text-xs text-red-400 mb-1">Flag Reason:</p>
+                <p className="text-sm text-red-300">{selectedAppeal.flagged_reason}</p>
+              </div>
+              
+              <div className="p-3 bg-yellow-600/10 border border-yellow-600/30">
+                <p className="text-xs text-yellow-400 mb-1">Student's Appeal:</p>
+                <p className="text-sm text-yellow-300">{selectedAppeal.appeal_text}</p>
+              </div>
+              
+              <Textarea
+                value={appealResponse}
+                onChange={(e) => setAppealResponse(e.target.value)}
+                placeholder="Enter your response (optional)..."
+                className="bg-transparent border-border focus:border-foreground"
+                rows={3}
+              />
+            </div>
+          )}
+          
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAppealDialog(false);
+                setAppealResponse('');
+                setSelectedAppeal(null);
+              }}
+              className="border-border text-muted-foreground"
+            >
+              CANCEL
+            </Button>
+            <Button
+              onClick={() => handleAppealReview(false)}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              REJECT APPEAL
+            </Button>
+            <Button
+              onClick={() => handleAppealReview(true)}
+              className="bg-green-600 text-white hover:bg-green-700"
+            >
+              APPROVE APPEAL
             </Button>
           </DialogFooter>
         </DialogContent>
