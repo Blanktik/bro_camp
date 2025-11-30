@@ -8,23 +8,26 @@ import { DashboardGuide } from '@/components/DashboardGuide';
 const guideSteps = [
   {
     title: 'Welcome to BROCAMP',
-    description: 'This is your student portal where you can submit complaints, manage your profile, and communicate with administrators. Let\'s show you around!',
+    description: 'This is your student portal where you can submit complaints, manage your profile, and communicate with administrators. Let\'s walk you through everything!',
     icon: <MessageSquare className="w-8 h-8 text-foreground" />,
   },
   {
     title: 'Submit Complaint',
-    description: 'Have an issue? Submit a complaint here. You can write text, attach images/videos, or even record a voice note. Choose to submit anonymously if you prefer privacy.',
+    description: 'Have an issue? Click here to submit a complaint. You can write text, attach images/videos, or record a voice note. Submit anonymously if you prefer privacy.',
     icon: <FileText className="w-8 h-8 text-foreground" />,
+    selector: '[data-guide="complaint-card"]',
   },
   {
     title: 'My Profile',
-    description: 'Update your personal information including your name, department, year, and profile picture. Keep your profile up to date!',
+    description: 'Update your personal information including name, bio, department, year, social links, and profile picture. Keep your profile up to date!',
     icon: <User className="w-8 h-8 text-foreground" />,
+    selector: '[data-guide="profile-card"]',
   },
   {
     title: 'Voice Assistant',
-    description: 'See the floating button in the corner? That\'s our AI voice assistant powered by ElevenLabs. Click it to speak your complaints directly - it will automatically submit them for you!',
+    description: 'See this floating button? That\'s our AI voice assistant. Click it to speak your complaints directly - it will automatically submit them for you!',
     icon: <Mic className="w-8 h-8 text-foreground" />,
+    selector: '[data-guide="voice-widget"]',
   },
 ];
 
@@ -33,8 +36,8 @@ export default function StudentDashboard() {
   const navigate = useNavigate();
 
   const menuItems = [
-    { icon: FileText, label: 'Submit Complaint', path: '/student/complaints' },
-    { icon: User, label: 'My Profile', path: '/student/profile' },
+    { icon: FileText, label: 'Submit Complaint', path: '/student/complaints', guideId: 'complaint-card' },
+    { icon: User, label: 'My Profile', path: '/student/profile', guideId: 'profile-card' },
   ];
 
   return (
@@ -45,7 +48,7 @@ export default function StudentDashboard() {
         dashboardName="Student Portal"
       />
 
-      <header className="border-b border-border p-4 flex justify-between items-center animate-slide-in-left">
+      <header className="border-b border-border p-4 flex justify-between items-center animate-slide-in-left" data-guide="header">
         <div className="flex items-center gap-8">
           <h1 className="text-2xl font-bold tracking-tighter">
             <span className="bg-foreground text-background px-2 inline-block hover:animate-glitch">BRO</span>CAMP
@@ -75,6 +78,7 @@ export default function StudentDashboard() {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
+                data-guide={item.guideId}
                 className="border border-border p-8 hover:border-foreground transition-all duration-300 text-left group hover-scale animate-fade-in-up"
                 style={{ animationDelay: `${(index + 3) * 100}ms` }}
               >
@@ -85,7 +89,9 @@ export default function StudentDashboard() {
           </div>
         </div>
       </main>
-      <ElevenLabsWidget />
+      <div data-guide="voice-widget">
+        <ElevenLabsWidget />
+      </div>
     </div>
   );
 }

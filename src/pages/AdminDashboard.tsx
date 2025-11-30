@@ -6,24 +6,27 @@ import { DashboardGuide } from '@/components/DashboardGuide';
 
 const guideSteps = [
   {
-    title: 'Welcome to Admin Dashboard',
-    description: 'This is your central hub for managing the BROCAMP ecosystem. From here, you can access all administrative features and monitor the platform.',
+    title: 'Welcome Admin',
+    description: 'This is your central hub for managing the BROCAMP ecosystem. From here, you can access all administrative features. Let\'s walk you through everything!',
     icon: <Shield className="w-8 h-8 text-foreground" />,
   },
   {
     title: 'User Management',
     description: 'View all registered users, manage their roles (promote students to admins or demote them), and monitor user activity across the platform.',
     icon: <Users className="w-8 h-8 text-foreground" />,
+    selector: '[data-guide="users-card"]',
   },
   {
     title: 'Complaints',
-    description: 'Review and respond to student complaints. You can use quick macros for common responses, add voice notes, and track complaint status.',
+    description: 'Review and respond to student complaints. Use quick macros for common responses, add voice notes, request more info, and track complaint status.',
     icon: <FileText className="w-8 h-8 text-foreground" />,
+    selector: '[data-guide="complaints-card"]',
   },
   {
     title: 'Content Moderation',
-    description: 'Flag inappropriate complaints, review flagged content, and permanently delete soft-deleted complaints. Keep the platform safe and clean.',
+    description: 'Flag inappropriate complaints, review flagged content, manage deleted complaints archive, and keep the platform safe and clean.',
     icon: <Shield className="w-8 h-8 text-foreground" />,
+    selector: '[data-guide="moderation-card"]',
   },
 ];
 
@@ -32,9 +35,9 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
 
   const adminItems = [
-    { icon: Users, label: 'User Management', path: '/admin/users' },
-    { icon: FileText, label: 'Complaints', path: '/admin/complaints' },
-    { icon: Shield, label: 'Moderation', path: '/admin/moderation' },
+    { icon: Users, label: 'User Management', path: '/admin/users', guideId: 'users-card' },
+    { icon: FileText, label: 'Complaints', path: '/admin/complaints', guideId: 'complaints-card' },
+    { icon: Shield, label: 'Moderation', path: '/admin/moderation', guideId: 'moderation-card' },
   ];
 
   return (
@@ -45,7 +48,7 @@ export default function AdminDashboard() {
         dashboardName="Admin"
       />
 
-      <header className="border-b border-border p-4 flex justify-between items-center animate-slide-in-left">
+      <header className="border-b border-border p-4 flex justify-between items-center animate-slide-in-left" data-guide="header">
         <div className="flex items-center gap-8">
           <h1 className="text-2xl font-bold tracking-tighter">
             <span className="bg-foreground text-background px-2 inline-block hover:animate-glitch">BRO</span>CAMP
@@ -78,6 +81,7 @@ export default function AdminDashboard() {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
+                data-guide={item.guideId}
                 className="border border-border p-8 hover:border-foreground transition-all duration-300 text-left group hover-scale animate-fade-in-up"
                 style={{ animationDelay: `${(index + 3) * 100}ms` }}
               >
