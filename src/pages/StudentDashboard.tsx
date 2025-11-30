@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -31,9 +32,19 @@ const guideSteps = [
   },
 ];
 
+const VOICE_ASSISTANT_STEP = 3; // Index of the voice assistant step
+
 export default function StudentDashboard() {
   const { user, userRole, signOut } = useAuth();
   const navigate = useNavigate();
+  const [guideState, setGuideState] = useState({ isShowing: false, currentStep: 0 });
+
+  const handleGuideStateChange = useCallback((isShowing: boolean, currentStep: number) => {
+    setGuideState({ isShowing, currentStep });
+  }, []);
+
+  // Show widget only when guide is not showing OR when on the voice assistant step
+  const showWidget = !guideState.isShowing || guideState.currentStep === VOICE_ASSISTANT_STEP;
 
   const menuItems = [
     { icon: FileText, label: 'Submit Complaint', path: '/student/complaints', guideId: 'complaint-card' },
@@ -46,6 +57,7 @@ export default function StudentDashboard() {
         steps={guideSteps}
         storageKey="brocamp-student-guide-seen"
         dashboardName="Student Portal"
+        onGuideStateChange={handleGuideStateChange}
       />
 
       <header className="border-b border-border p-4 flex justify-between items-center animate-slide-in-left" data-guide="header">
@@ -89,9 +101,12 @@ export default function StudentDashboard() {
           </div>
         </div>
       </main>
-      <div data-guide="voice-widget">
-        <ElevenLabsWidget />
-      </div>
+      
+      {showWidget && (
+        <div data-guide="voice-widget">
+          <ElevenLabsWidget />
+        </div>
+      )}
     </div>
   );
 }

@@ -14,9 +14,10 @@ interface DashboardGuideProps {
   steps: GuideStep[];
   storageKey: string;
   dashboardName: string;
+  onGuideStateChange?: (isShowing: boolean, currentStep: number) => void;
 }
 
-export function DashboardGuide({ steps, storageKey, dashboardName }: DashboardGuideProps) {
+export function DashboardGuide({ steps, storageKey, dashboardName, onGuideStateChange }: DashboardGuideProps) {
   const [showGuide, setShowGuide] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [hasSeenGuide, setHasSeenGuide] = useState(true);
@@ -31,6 +32,11 @@ export function DashboardGuide({ steps, storageKey, dashboardName }: DashboardGu
       setTimeout(() => setShowGuide(true), 500);
     }
   }, [storageKey]);
+
+  // Notify parent of guide state changes
+  useEffect(() => {
+    onGuideStateChange?.(showGuide, currentStep);
+  }, [showGuide, currentStep, onGuideStateChange]);
 
   useEffect(() => {
     if (!showGuide) return;
