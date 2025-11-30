@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, ChevronRight, ChevronLeft, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,6 +7,7 @@ interface GuideStep {
   title: string;
   description: string;
   icon?: React.ReactNode;
+  selector?: string; // CSS selector for the element to highlight
 }
 
 interface DashboardGuideProps {
@@ -19,14 +20,94 @@ export function DashboardGuide({ steps, storageKey, dashboardName }: DashboardGu
   const [showGuide, setShowGuide] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [hasSeenGuide, setHasSeenGuide] = useState(true);
+  const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{ top: number; left: number; placement: 'top' | 'bottom' | 'left' | 'right' }>({ top: 0, left: 0, placement: 'bottom' });
 
   useEffect(() => {
     const seen = localStorage.getItem(storageKey);
     if (!seen) {
       setHasSeenGuide(false);
-      setShowGuide(true);
+      // Small delay to let the page render
+      setTimeout(() => setShowGuide(true), 500);
     }
   }, [storageKey]);
+
+  useEffect(() => {
+    if (!showGuide) return;
+
+    const currentSelector = steps[currentStep]?.selector;
+    if (currentSelector) {
+      const element = document.querySelector(currentSelector);
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        setHighlightRect(rect);
+        
+        // Calculate tooltip position
+        const windowHeight = window.innerHeight;
+        const windowWidth = window.innerWidth;
+        const tooltipWidth = 400;
+        const tooltipHeight = 200;
+        const padding = 20;
+
+        let top = 0;
+        let left = 0;
+        let placement: 'top' | 'bottom' | 'left' | 'right' = 'bottom';
+
+        // Try bottom first
+        if (rect.bottom + tooltipHeight + padding < windowHeight) {
+          top = rect.bottom + padding;
+          left = rect.left + rect.width / 2 - tooltipWidth / 2;
+          placement = 'bottom';
+        }
+        // Try top
+        else if (rect.top - tooltipHeight - padding > 0) {
+          top = rect.top - tooltipHeight - padding;
+          left = rect.left + rect.width / 2 - tooltipWidth / 2;
+          placement = 'top';
+        }
+        // Try right
+        else if (rect.right + tooltipWidth + padding < windowWidth) {
+          top = rect.top + rect.height / 2 - tooltipHeight / 2;
+          left = rect.right + padding;
+          placement = 'right';
+        }
+        // Try left
+        else {
+          top = rect.top + rect.height / 2 - tooltipHeight / 2;
+          left = rect.left - tooltipWidth - padding;
+          placement = 'left';
+        }
+
+        // Keep tooltip within bounds
+        left = Math.max(padding, Math.min(left, windowWidth - tooltipWidth - padding));
+        top = Math.max(padding, Math.min(top, windowHeight - tooltipHeight - padding));
+
+        setTooltipPosition({ top, left, placement });
+      } else {
+        setHighlightRect(null);
+      }
+    } else {
+      setHighlightRect(null);
+    }
+  }, [showGuide, currentStep, steps]);
+
+  // Handle window resize
+  useEffect(() => {
+    if (!showGuide) return;
+
+    const handleResize = () => {
+      const currentSelector = steps[currentStep]?.selector;
+      if (currentSelector) {
+        const element = document.querySelector(currentSelector);
+        if (element) {
+          setHighlightRect(element.getBoundingClientRect());
+        }
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [showGuide, currentStep, steps]);
 
   const handleClose = () => {
     setShowGuide(false);
@@ -53,6 +134,10 @@ export function DashboardGuide({ steps, storageKey, dashboardName }: DashboardGu
     setShowGuide(true);
   };
 
+  const handleSkip = () => {
+    handleClose();
+  };
+
   return (
     <>
       {/* Help button to reopen guide */}
@@ -68,75 +153,120 @@ export function DashboardGuide({ steps, storageKey, dashboardName }: DashboardGu
         </motion.button>
       )}
 
-      {/* Guide Modal */}
+      {/* Guide Overlay */}
       <AnimatePresence>
         {showGuide && (
           <>
-            {/* Backdrop */}
+            {/* Full screen blur overlay with spotlight cutout */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={handleClose}
-              className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50"
+              className="fixed inset-0 z-50 pointer-events-none"
+              style={{
+                background: highlightRect
+                  ? `radial-gradient(ellipse ${highlightRect.width + 40}px ${highlightRect.height + 40}px at ${highlightRect.left + highlightRect.width / 2}px ${highlightRect.top + highlightRect.height / 2}px, transparent 0%, rgba(0, 0, 0, 0.9) 100%)`
+                  : 'rgba(0, 0, 0, 0.9)',
+              }}
             />
 
-            {/* Guide Content */}
+            {/* Backdrop blur layer */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 backdrop-blur-sm pointer-events-auto"
+              onClick={handleSkip}
+              style={{
+                background: 'transparent',
+                maskImage: highlightRect
+                  ? `radial-gradient(ellipse ${highlightRect.width + 40}px ${highlightRect.height + 40}px at ${highlightRect.left + highlightRect.width / 2}px ${highlightRect.top + highlightRect.height / 2}px, transparent 60%, black 100%)`
+                  : 'none',
+                WebkitMaskImage: highlightRect
+                  ? `radial-gradient(ellipse ${highlightRect.width + 40}px ${highlightRect.height + 40}px at ${highlightRect.left + highlightRect.width / 2}px ${highlightRect.top + highlightRect.height / 2}px, transparent 60%, black 100%)`
+                  : 'none',
+              }}
+            />
+
+            {/* Highlight border around element */}
+            {highlightRect && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="fixed z-50 pointer-events-none border-2 border-foreground"
+                style={{
+                  top: highlightRect.top - 8,
+                  left: highlightRect.left - 8,
+                  width: highlightRect.width + 16,
+                  height: highlightRect.height + 16,
+                  boxShadow: '0 0 0 4000px rgba(0, 0, 0, 0.85), 0 0 30px rgba(255, 255, 255, 0.3)',
+                }}
+              />
+            )}
+
+            {/* Tooltip/Guide Content */}
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-lg mx-auto"
+              className="fixed z-50 w-[400px] max-w-[calc(100vw-40px)]"
+              style={highlightRect ? {
+                top: tooltipPosition.top,
+                left: tooltipPosition.left,
+              } : {
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+              }}
             >
-              <div className="bg-card border border-border p-8 relative">
-                {/* Close button */}
+              <div className="bg-card border border-border p-6 relative shadow-2xl">
+                {/* Skip button */}
                 <button
-                  onClick={handleClose}
-                  className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={handleSkip}
+                  className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors text-xs tracking-wider"
                 >
-                  <X className="w-5 h-5" />
+                  SKIP
                 </button>
 
                 {/* Header */}
-                <div className="mb-6">
-                  <span className="text-xs text-muted-foreground tracking-widest">
-                    {dashboardName.toUpperCase()} GUIDE
-                  </span>
-                  <h2 className="text-2xl font-bold mt-1 tracking-tight">
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs text-muted-foreground tracking-widest">
+                      {dashboardName.toUpperCase()} • STEP {currentStep + 1}/{steps.length}
+                    </span>
+                  </div>
+                  <h2 className="text-xl font-bold tracking-tight">
                     {steps[currentStep].title}
                   </h2>
                 </div>
 
                 {/* Step Content */}
-                <motion.div
-                  key={currentStep}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="mb-8"
-                >
+                <div className="mb-6">
                   {steps[currentStep].icon && (
-                    <div className="mb-4 p-4 bg-secondary inline-block">
+                    <div className="mb-3 p-3 bg-secondary inline-block">
                       {steps[currentStep].icon}
                     </div>
                   )}
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     {steps[currentStep].description}
                   </p>
-                </motion.div>
+                </div>
 
                 {/* Progress dots */}
-                <div className="flex items-center justify-center gap-2 mb-6">
+                <div className="flex items-center justify-center gap-2 mb-4">
                   {steps.map((_, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentStep(index)}
-                      className={`w-2 h-2 transition-all duration-300 ${
+                      className={`h-1.5 transition-all duration-300 ${
                         index === currentStep
                           ? 'bg-foreground w-6'
-                          : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                          : index < currentStep
+                          ? 'bg-foreground/50 w-1.5'
+                          : 'bg-muted-foreground/30 w-1.5 hover:bg-muted-foreground/50'
                       }`}
                     />
                   ))}
@@ -148,22 +278,18 @@ export function DashboardGuide({ steps, storageKey, dashboardName }: DashboardGu
                     variant="ghost"
                     onClick={handlePrev}
                     disabled={currentStep === 0}
-                    className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                    className="text-muted-foreground hover:text-foreground disabled:opacity-30 text-xs tracking-wider"
                   >
                     <ChevronLeft className="w-4 h-4 mr-1" />
-                    PREV
+                    BACK
                   </Button>
 
-                  <span className="text-xs text-muted-foreground tracking-wider">
-                    {currentStep + 1} / {steps.length}
-                  </span>
-
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     onClick={handleNext}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="border-foreground text-foreground hover:bg-foreground hover:text-background text-xs tracking-wider"
                   >
-                    {currentStep === steps.length - 1 ? 'FINISH' : 'NEXT'}
+                    {currentStep === steps.length - 1 ? 'GET STARTED' : 'NEXT'}
                     <ChevronRight className="w-4 h-4 ml-1" />
                   </Button>
                 </div>
